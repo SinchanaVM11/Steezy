@@ -1,0 +1,63 @@
+# Steezy
+
+Steezy is a research-oriented fashion intelligence system. Its long-term goal is to turn fashion images and wardrobe data into structured, explainable, personalized recommendations. The repository is currently in the **engineering foundation phase**; advanced computer vision, embeddings, retrieval, and recommendation features are intentionally not implemented yet.
+
+## Repository layout
+
+```text
+backend/                  FastAPI service boundary and backend tests
+  app/
+    api/                  HTTP route modules
+    ai/                   Future perception and representation providers
+    core/                 Configuration and cross-cutting concerns
+    db/                   Future persistence boundary
+    models/               Future persistence/domain models
+    repositories/         Future data-access implementations
+    schemas/              API request/response schemas
+    services/             Application/business services
+  tests/
+mobile/                   Future React Native / Expo client boundary
+docs/
+  ARCHITECTURE_CURRENT.md Current state and phased target architecture
+  MASTER_ENGINEERING_SPECIFICATION.txt Product and engineering specification
+```
+
+## Prerequisites
+
+- Python 3.10+
+- Node.js 20+ and npm (needed when the Expo client is introduced)
+
+## Backend setup
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -e '.[dev]'
+cp .env.example .env
+uvicorn app.main:app --app-dir backend --reload
+```
+
+The initial service exposes `GET /health` and `GET /docs`. It is a liveness boundary, not an AI or database implementation.
+
+Run the backend checks with:
+
+```bash
+pytest
+```
+
+## Mobile status
+
+The `mobile/` directory is a deliberate boundary for the future Expo client. It contains no runnable application yet; the next phase should introduce the client only after the API contract and wardrobe domain have been designed.
+
+## Contribution guidance
+
+1. Read `docs/MASTER_ENGINEERING_SPECIFICATION.txt` and `docs/ARCHITECTURE_CURRENT.md` before making architectural changes.
+2. Keep route handlers thin; put business logic in services and data access behind repositories.
+3. Keep AI providers replaceable and label mocks/placeholders explicitly.
+4. Add focused tests and documentation with each phase.
+5. Never commit `.env`, credentials, tokens, user images, datasets, or generated model artifacts.
+
+## Current limitations
+
+There is no authentication, persistence, image upload, garment analysis, mobile UI, or recommendation engine yet. These are intentionally deferred and should be implemented incrementally with evaluation and privacy documentation.
