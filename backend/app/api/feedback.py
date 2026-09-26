@@ -6,6 +6,7 @@ from app.core.config import get_settings
 from app.repositories.feedback import SQLiteFeedbackRepository
 from app.repositories.wardrobe import SQLiteWardrobeRepository
 from app.schemas.feedback import FeedbackCreate, FeedbackResponse
+from app.schemas.errors import ErrorResponse
 from app.core.errors import ApiError
 from app.services.feedback import (
     FeedbackService,
@@ -23,7 +24,17 @@ def get_feedback_service() -> FeedbackService:
     return FeedbackService(feedback_repository, wardrobe_repository)
 
 
-@router.post("", response_model=FeedbackResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=FeedbackResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Record an append-only feedback event",
+    responses={
+        404: {"model": ErrorResponse, "description": "Item missing or not owned"},
+        422: {"model": ErrorResponse, "description": "Validation error"},
+        503: {"model": ErrorResponse, "description": "Persistence error"},
+    },
+)
 def create_feedback(
     data: FeedbackCreate,
     service: FeedbackService = Depends(get_feedback_service),
@@ -36,7 +47,15 @@ def create_feedback(
         raise ApiError("item_not_owned", str(error), 404) from error
 
 
-@router.get("", response_model=list[FeedbackResponse])
+@router.get(
+    "",
+    response_model=list[FeedbackResponse],
+    summary="List a user's feedback events",
+    responses={
+        422: {"model": ErrorResponse, "description": "Validation error"},
+        503: {"model": ErrorResponse, "description": "Persistence error"},
+    },
+)
 def list_feedback(
     user_id: UUID = Query(...),
     service: FeedbackService = Depends(get_feedback_service),

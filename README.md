@@ -40,6 +40,17 @@ uvicorn app.main:app --app-dir backend --reload
 
 The initial service exposes `GET /health` and `GET /docs`. It is a liveness boundary, not an AI or database implementation.
 
+The current HTTP contract can be exported and validated without network access:
+
+```bash
+python backend/scripts/export_openapi.py --output /tmp/steezy-openapi.json
+```
+
+The generated document describes the health, wardrobe, and feedback operations,
+including successful response models and the shared structured error envelope.
+The Expo client consumes these same route paths through typed clients; its
+runtime user ID remains explicit until authentication is added.
+
 Run the backend checks with:
 
 ```bash

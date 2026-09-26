@@ -37,6 +37,13 @@ API errors use a stable envelope:
 }
 ```
 
+The collaboration contract is reproducible with
+`python backend/scripts/export_openapi.py`. The script validates the five
+current operations and writes a deterministic JSON document without starting a
+server or making network calls. Mobile clients should treat this OpenAPI
+document as the route/response reference while keeping their runtime API URL
+and user ID explicit.
+
 configuration
   └── environment-backed settings (no secrets committed)
 
@@ -237,6 +244,10 @@ The current service is intentionally small enough to trace end to end:
 14. Error handlers centralize diagnostics without exposing database exception
      text. Clients can show the stable message, while `X-Request-ID` connects a
      report to server logs in a future logging sink.
+15. Route decorators declare response models, summaries, tags, and documented
+     error statuses. `backend/tests/test_openapi.py` protects stable paths and
+     error-schema keys; the export script is the local collaboration artifact,
+     not a generated runtime dependency.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,
