@@ -19,15 +19,25 @@ device cannot reach that loopback address on the development computer; use the
 computer's LAN address through a future runtime configuration mechanism rather
 than hardcoding it into source code.
 
+Set the explicit user and API configuration before running the wardrobe screen:
+
+```bash
+EXPO_PUBLIC_STEEZY_API_BASE_URL=http://127.0.0.1:8000 \
+EXPO_PUBLIC_STEEZY_USER_ID=<user-id> \
+npm start
+```
+
 ## Navigation boundary
 
 - `Home` is the current landing screen and owns the health-contract status
   boundary.
 - `Wardrobe` and `Inspiration` are explicit placeholders for later vertical
-  slices, not mocked product functionality.
+  slices, except that Wardrobe now loads the typed `/wardrobe/items` contract.
 - `src/api/health.tsx` validates the response shape before exposing it to UI
 - `src/api/wardrobe.ts` provides a user-scoped typed collection client without
   introducing a screen or local persistence.
+- `src/wardrobe/useWardrobe.ts` owns loading, empty, success, and error state
+  transitions. It requires an explicit user ID and does not imply auth.
   state.
 
 Planned client responsibilities:

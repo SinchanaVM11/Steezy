@@ -29,7 +29,8 @@ configuration
 
 Expo SDK 57 mobile application
   ├── native-stack navigation: Home, Wardrobe, Inspiration
-  └── typed health client → GET /health
+  ├── typed health client → GET /health
+  └── typed wardrobe state → GET /wardrobe/items?user_id=…
 ```
 
 `GET /health` is a process liveness check. It does not prove database
@@ -84,7 +85,7 @@ exist.
 - Keep Wardrobe and Inspiration as clearly labeled placeholders until their
   backend contracts exist.
 
-### Phase 2 — wardrobe contract and local persistence (current)
+### Phase 2 — wardrobe contract and local persistence (complete)
 
 - Define validated wardrobe request/response schemas and domain models.
 - Introduce a repository protocol with in-memory and SQLite adapters.
@@ -102,7 +103,7 @@ exist.
   inventing a prediction or confidence score.
 - Keep the analyzer replaceable before image-based perception is introduced.
 
-### Phase 2.6 — feedback capture (current)
+### Phase 2.6 — feedback capture (complete)
 
 - Accept a small allow-list of explicit feedback actions for a wardrobe item.
 - Verify the referenced item belongs to the submitting user before recording.
@@ -110,6 +111,12 @@ exist.
   isolated tests.
 - Do not rank, train, update profiles, or claim that feedback has changed a
   model.
+
+### Phase 2.7 — mobile wardrobe state boundary (current)
+
+- Connect the Expo 57 Wardrobe screen to the existing typed collection API.
+- Make loading, empty, success, and API/configuration-error states explicit.
+- Keep user identity an explicit runtime configuration value until auth exists.
 
 ### Phase 3 — fashion perception baseline
 
@@ -190,6 +197,9 @@ The current service is intentionally small enough to trace end to end:
     ownership, writes one immutable event, and exposes user-scoped reads. The
     action list and raw context are transparent inputs for a future learning
     phase; this implementation performs no learning.
+12. `useWardrobe` is the mobile state boundary: it invokes the typed API client,
+    maps results into explicit UI states, and preserves prior items on reload
+    failure. It does not own authentication, persistence, or business logic.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,

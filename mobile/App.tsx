@@ -4,6 +4,8 @@ import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
 
 import { HealthStatus } from "./src/api/health";
+import { API_BASE_URL, USER_ID } from "./src/config";
+import { useWardrobe } from "./src/wardrobe/useWardrobe";
 
 type RootStackParamList = {
   Home: undefined;
@@ -37,20 +39,45 @@ function PlaceholderScreen({ title, description }: { title: string; description:
   );
 }
 
+function WardrobeScreen() {
+  const { state, reload } = useWardrobe(USER_ID, API_BASE_URL);
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.eyebrow}>WARDROBE</Text>
+      <Text style={styles.title}>Your pieces.</Text>
+      {state.status === "loading" && <Text style={styles.body}>Loading wardrobe…</Text>}
+      {state.status === "empty" && (
+        <Text style={styles.body}>Your wardrobe is empty. Add a garment through the API to get started.</Text>
+      )}
+      {state.status === "error" && (
+        <>
+          <Text style={styles.body}>Wardrobe unavailable: {state.message}</Text>
+          <Text accessibilityRole="button" onPress={() => void reload()} style={styles.action}>
+            Try again
+          </Text>
+        </>
+      )}
+      {state.status === "success" && (
+        <View>
+          {state.items.map((item) => (
+            <Text key={item.id} style={styles.body}>
+              {item.category} · {item.colors.join(", ") || "color not specified"}
+            </Text>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function App() {
   return (
     <NavigationContainer>
       <StatusBar style="dark" />
       <Stack.Navigator>
         <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Wardrobe">
-          {() => (
-            <PlaceholderScreen
-              title="Wardrobe"
-              description="A structured wardrobe contract will power this screen after persistence is introduced."
-            />
-          )}
-        </Stack.Screen>
+        <Stack.Screen name="Wardrobe" component={WardrobeScreen} />
         <Stack.Screen name="Inspiration">
           {() => (
             <PlaceholderScreen
@@ -87,5 +114,10 @@ const styles = StyleSheet.create({
     color: "#5C534A",
     fontSize: 16,
     lineHeight: 24,
+  },
+  action: {
+    color: "#6D4C41",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
