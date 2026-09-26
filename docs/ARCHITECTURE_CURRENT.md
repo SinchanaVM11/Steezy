@@ -164,8 +164,9 @@ exist.
 - Validate and preprocess stored image bytes with Pillow.
 - Run a replaceable perception boundary that extracts a conservative category
   baseline and dominant RGB-nearest color.
-- Generate a deterministic, normalized byte embedding through an
-  `EmbeddingService` protocol; this is a seam, not a learned visual model.
+- Generate a normalized image-derived RGB feature embedding through an
+  `EmbeddingService` protocol; this is a low-level visual baseline, not a
+  learned fashion model.
 - Persist structured predictions, provenance, embedding metadata, asset
   reference, and user-verified attributes separately on wardrobe items.
 - Expose an explicit verification endpoint; verification never overwrites AI
@@ -277,8 +278,12 @@ The current service is intentionally small enough to trace end to end:
      extracting one dominant color by nearest reference color. Category uses the
      filename only as an explicitly labeled baseline signal; unsupported
      categories and attributes are `unknown` with null confidence. The
-     deterministic byte embedding is normalized and records model name, version,
-     dimension, and source, but must not be treated as semantic similarity.
+     visual feature embedding is normalized and records model name, version,
+     dimension, and source. It captures low-level color/layout similarity only
+     and must not be treated as semantic fashion similarity.
+20. `docs/decisions/ADR-003-evaluated-model-providers.md` records the provider
+     audit and evaluation gate. The checked-in fixtures are regression evidence,
+     not a substitute for a labeled fashion benchmark or calibrated confidence.
 20. `FashionItemRepresentation` stores predicted values and provenance in
      `representation`; `verified_attributes` and `verification_status` are
      separate user-owned state. `PATCH /wardrobe/items/{item_id}/verification`

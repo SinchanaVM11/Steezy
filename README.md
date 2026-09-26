@@ -53,13 +53,12 @@ The Expo client consumes these same route paths through typed clients; its
 runtime user ID remains explicit until authentication is added.
 
 Image ingestion currently stores validated JPEG, PNG, or WebP bytes under
-`.data/assets` outside SQLite and returns a generated asset reference. It does
-not inspect images or invoke a model.
+`.data/assets` outside SQLite and returns a generated asset reference.
 
-`POST /analysis/garments` is a synchronous, in-process deterministic baseline
-that reads a user-owned stored asset and derives metadata from its filename
-only. It is not a durable job queue, computer-vision model, or claim of image
-understanding.
+`POST /analysis/garments` is a synchronous, in-process baseline that reads a
+user-owned stored asset, preprocesses pixels, extracts low-level RGB features,
+and derives the category from the filename baseline. It is not a durable job
+queue, CLIP/fashion model, or claim of semantic image understanding.
 
 Run the backend checks with:
 
@@ -81,10 +80,10 @@ The `mobile/` directory is a deliberate boundary for the future Expo client. It 
 
 ## Current limitations
 
-There is no authentication, computer-vision analysis, or recommendation
-engine yet. Image upload is currently limited to safe byte ingestion; the
-deterministic metadata baseline does not inspect pixels. These capabilities
-should be implemented incrementally with evaluation and privacy documentation.
+There is no authentication, production computer-vision model, or
+recommendation engine yet. The current visual feature provider is an offline
+evaluated baseline for low-level similarity only; it does not claim semantic
+fashion understanding.
 
 The current deterministic metadata analysis is filename/metadata-based and
 executes synchronously in-process. A completed analysis can be materialized
@@ -93,9 +92,9 @@ item retains its asset reference, provider, unknown attributes, and analysis
 job ID for idempotent retries. Analysis jobs are not durable across process
 restarts, and no confidence or computer-vision inference is claimed.
 
-The perception baseline now accepts valid stored images, performs RGB thumbnail
+The perception baseline accepts valid stored images, performs RGB thumbnail
 preprocessing, extracts a conservative dominant color, and returns a
-structured representation with provenance and a deterministic placeholder
-embedding. User corrections are kept separate via
+structured representation with provenance and a normalized image-derived
+36-dimensional embedding. User corrections are kept separate via
 `PATCH /wardrobe/items/{item_id}/verification`. Export the complete contract
 with `python backend/scripts/export_openapi.py --output /tmp/steezy-openapi.json`.

@@ -34,7 +34,7 @@ async def test_analysis_is_deterministic_and_user_scoped() -> None:
     assert first.status == AnalysisStatus.COMPLETED
     assert first.result == second.result
     assert first.result.category == "shirt"
-    assert first.result.representation.visual_embedding.metadata.dimension == 8
+    assert first.result.representation.visual_embedding.metadata.dimension == 36
     assert first.result.provider == "deterministic-fashion-perception-baseline"
     with pytest.raises(AssetNotOwnedError):
         await service.analyze(asset.asset_id, uuid4())

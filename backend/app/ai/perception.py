@@ -4,7 +4,7 @@ from typing import Protocol
 
 from PIL import Image, UnidentifiedImageError
 
-from app.ai.embedding import DeterministicByteEmbedding, EmbeddingService
+from app.ai.embedding import EmbeddingService, VisualFeatureEmbedding
 from app.schemas.representation import FashionItemRepresentation, Prediction
 
 
@@ -30,14 +30,18 @@ class DeterministicFashionPerception:
     )
 
     def __init__(self, embedding: EmbeddingService | None = None) -> None:
-        self._embedding = embedding or DeterministicByteEmbedding()
+        self._embedding = embedding or VisualFeatureEmbedding()
 
     def analyze(self, image_bytes: bytes, filename: str) -> FashionItemRepresentation:
         try:
             with Image.open(BytesIO(image_bytes)) as image:
                 image = image.convert("RGB")
                 image.thumbnail((128, 128))
-                pixels = list(image.getdata())
+                pixels = list(
+                    image.get_flattened_data()
+                    if hasattr(image, "get_flattened_data")
+                    else image.getdata()
+                )
         except (UnidentifiedImageError, OSError) as error:
             raise ValueError("image preprocessing failed") from error
         if not pixels:
