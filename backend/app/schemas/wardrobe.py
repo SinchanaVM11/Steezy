@@ -22,5 +22,9 @@ class WardrobeItemResponse(BaseModel):
     colors: list[str]
     source: str
     verification_status: str
+    asset_id: UUID | None
+    analysis_job_id: UUID | None
+    analysis_provider: str | None
+    analysis_unknown_attributes: list[str]
     created_at: datetime
     updated_at: datetime

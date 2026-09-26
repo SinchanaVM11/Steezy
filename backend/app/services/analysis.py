@@ -28,6 +28,7 @@ class AnalysisService:
     ) -> None:
         self._storage = storage
         self._analyzer = analyzer or DeterministicMetadataAnalyzer()
+        self._jobs: dict[UUID, AnalysisJobResponse] = {}
 
     async def analyze(self, asset_id: UUID, user_id: UUID) -> AnalysisJobResponse:
         asset = await self._storage.get(asset_id)
@@ -41,17 +42,19 @@ class AnalysisService:
             result = self._analyzer.analyze(
                 GarmentAnalysisInput(category=category or "unknown")
             )
-            return AnalysisJobResponse(
+            job = AnalysisJobResponse(
                 job_id=uuid4(),
                 asset_id=asset.asset_id,
                 user_id=user_id,
                 status=AnalysisStatus.COMPLETED,
                 result=result.model_dump(),
             )
+            self._jobs[job.job_id] = job
+            return job
         except ApiError:
             raise
         except Exception as error:
-            return AnalysisJobResponse(
+            job = AnalysisJobResponse(
                 job_id=uuid4(),
                 asset_id=asset.asset_id,
                 user_id=user_id,
@@ -59,3 +62,8 @@ class AnalysisService:
                 result=None,
                 error_code="analysis_failed",
             )
+            self._jobs[job.job_id] = job
+            return job
+
+    def get_job(self, job_id: UUID) -> AnalysisJobResponse | None:
+        return self._jobs.get(job_id)

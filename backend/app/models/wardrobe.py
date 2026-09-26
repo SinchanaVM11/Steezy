@@ -12,5 +12,9 @@ class WardrobeItem:
     colors: tuple[str, ...]
     source: str
     verification_status: str
+    asset_id: UUID | None
+    analysis_job_id: UUID | None
+    analysis_provider: str | None
+    analysis_unknown_attributes: tuple[str, ...]
     created_at: datetime
     updated_at: datetime

@@ -16,6 +16,7 @@ REQUIRED_OPERATIONS = {
     ("/feedback", "post"),
     ("/assets/images", "post"),
     ("/analysis/garments", "post"),
+    ("/analysis/garments/{job_id}/wardrobe-item", "post"),
 }
 
 

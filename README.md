@@ -81,7 +81,14 @@ The `mobile/` directory is a deliberate boundary for the future Expo client. It 
 
 ## Current limitations
 
-There is no authentication, image analysis, or recommendation engine yet.
-Image upload is currently limited to safe byte ingestion; it does not infer
-garment attributes. These capabilities should be implemented incrementally
-with evaluation and privacy documentation.
+There is no authentication, computer-vision analysis, or recommendation
+engine yet. Image upload is currently limited to safe byte ingestion; the
+deterministic metadata baseline does not inspect pixels. These capabilities
+should be implemented incrementally with evaluation and privacy documentation.
+
+The current deterministic metadata analysis is filename/metadata-based and
+executes synchronously in-process. A completed analysis can be materialized
+with `POST /analysis/garments/{job_id}/wardrobe-item`; the resulting wardrobe
+item retains its asset reference, provider, unknown attributes, and analysis
+job ID for idempotent retries. Analysis jobs are not durable across process
+restarts, and no confidence or computer-vision inference is claimed.

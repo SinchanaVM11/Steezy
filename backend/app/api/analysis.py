@@ -5,19 +5,27 @@ from fastapi import APIRouter, Depends, Header, status
 from app.core.config import get_settings
 from app.core.errors import ApiError
 from app.schemas.analysis import AnalysisJobCreate, AnalysisJobResponse
+from app.schemas.wardrobe import WardrobeItemResponse
 from app.services.analysis import (
     AnalysisService,
     AssetNotFoundError,
     AssetNotOwnedError,
 )
-from app.storage.assets import LocalFileAssetStorage
+from app.api.assets import storage
+from app.repositories.wardrobe import SQLiteWardrobeRepository
+from app.services.materialization import MaterializationService
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
-storage = LocalFileAssetStorage(get_settings().asset_storage_path)
+wardrobe_repository = SQLiteWardrobeRepository(get_settings().database_path)
+analysis_service = AnalysisService(storage)
 
 
 def get_analysis_service() -> AnalysisService:
-    return AnalysisService(storage)
+    return analysis_service
+
+
+def get_materialization_service() -> MaterializationService:
+    return MaterializationService(wardrobe_repository, storage)
 
 
 @router.post(
@@ -42,3 +50,27 @@ async def analyze_garment(
         raise ApiError("asset_not_found", str(error), 404) from error
     except AssetNotOwnedError as error:
         raise ApiError("asset_not_owned", str(error), 404) from error
+
+
+@router.post(
+    "/garments/{job_id}/wardrobe-item",
+    response_model=WardrobeItemResponse,
+    summary="Materialize a completed analysis into the wardrobe",
+    responses={
+        404: {"description": "Analysis missing or not owned"},
+        409: {"description": "Analysis is not completed"},
+        503: {"description": "Persistence failure"},
+    },
+)
+async def materialize_garment(
+    job_id: UUID,
+    user_id: UUID = Header(..., alias="X-User-ID"),
+    analysis: AnalysisService = Depends(get_analysis_service),
+    materialization: MaterializationService = Depends(get_materialization_service),
+) -> WardrobeItemResponse:
+    job = analysis.get_job(job_id)
+    if job is None:
+        raise ApiError("analysis_not_found", "Analysis job was not found.", 404)
+    return WardrobeItemResponse.model_validate(
+        await materialization.materialize(job, user_id)
+    )

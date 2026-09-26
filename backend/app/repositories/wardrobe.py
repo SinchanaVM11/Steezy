@@ -17,6 +17,10 @@ class WardrobeRepository(Protocol):
 
     def get_for_user(self, item_id: UUID, user_id: UUID) -> WardrobeItem | None: ...
 
+    def get_by_analysis_job_for_user(
+        self, analysis_job_id: UUID, user_id: UUID
+    ) -> WardrobeItem | None: ...
+
     def list_for_user(self, user_id: UUID) -> Iterable[WardrobeItem]: ...
 
 
@@ -40,6 +44,18 @@ class InMemoryWardrobeRepository:
         item = self._items.get(item_id)
         return item if item is not None and item.user_id == user_id else None
 
+    def get_by_analysis_job_for_user(
+        self, analysis_job_id: UUID, user_id: UUID
+    ) -> WardrobeItem | None:
+        return next(
+            (
+                item
+                for item in self._items.values()
+                if item.analysis_job_id == analysis_job_id and item.user_id == user_id
+            ),
+            None,
+        )
+
 
 class SQLiteWardrobeRepository:
     """Durable local adapter; PostgreSQL can replace it behind the same protocol."""
@@ -55,8 +71,9 @@ class SQLiteWardrobeRepository:
                 """
                 INSERT INTO wardrobe_items
                 (id, user_id, category, subcategory, colors, source,
-                 verification_status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 verification_status, asset_id, analysis_job_id, analysis_provider,
+                 analysis_unknown_attributes, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                     (
                     str(item.id),
@@ -66,6 +83,10 @@ class SQLiteWardrobeRepository:
                     json.dumps(item.colors),
                     item.source,
                     item.verification_status,
+                    str(item.asset_id) if item.asset_id else None,
+                    str(item.analysis_job_id) if item.analysis_job_id else None,
+                    item.analysis_provider,
+                    json.dumps(item.analysis_unknown_attributes),
                     item.created_at.isoformat(),
                     item.updated_at.isoformat(),
                     ),
@@ -79,7 +100,8 @@ class SQLiteWardrobeRepository:
             rows = connection.execute(
                 """
                 SELECT id, user_id, category, subcategory, colors, source,
-                       verification_status, created_at, updated_at
+                       verification_status, asset_id, analysis_job_id, analysis_provider,
+                       analysis_unknown_attributes, created_at, updated_at
                 FROM wardrobe_items
                 WHERE user_id = ?
                 ORDER BY created_at, id
@@ -93,7 +115,8 @@ class SQLiteWardrobeRepository:
             row = connection.execute(
                 """
                 SELECT id, user_id, category, subcategory, colors, source,
-                       verification_status, created_at, updated_at
+                       verification_status, asset_id, analysis_job_id, analysis_provider,
+                       analysis_unknown_attributes, created_at, updated_at
                 FROM wardrobe_items
                 WHERE id = ?
                 """,
@@ -106,11 +129,28 @@ class SQLiteWardrobeRepository:
             row = connection.execute(
                 """
                 SELECT id, user_id, category, subcategory, colors, source,
-                       verification_status, created_at, updated_at
+                       verification_status, asset_id, analysis_job_id, analysis_provider,
+                       analysis_unknown_attributes, created_at, updated_at
                 FROM wardrobe_items
                 WHERE id = ? AND user_id = ?
                 """,
                 (str(item_id), str(user_id)),
+            ).fetchone()
+        return self._from_row(row) if row is not None else None
+
+    def get_by_analysis_job_for_user(
+        self, analysis_job_id: UUID, user_id: UUID
+    ) -> WardrobeItem | None:
+        with sqlite3.connect(self._database_path) as connection:
+            row = connection.execute(
+                """
+                SELECT id, user_id, category, subcategory, colors, source,
+                       verification_status, asset_id, analysis_job_id, analysis_provider,
+                       analysis_unknown_attributes, created_at, updated_at
+                FROM wardrobe_items
+                WHERE analysis_job_id = ? AND user_id = ?
+                """,
+                (str(analysis_job_id), str(user_id)),
             ).fetchone()
         return self._from_row(row) if row is not None else None
 
@@ -124,6 +164,10 @@ class SQLiteWardrobeRepository:
             colors,
             source,
             verification_status,
+            asset_id,
+            analysis_job_id,
+            analysis_provider,
+            analysis_unknown_attributes,
             created_at,
             updated_at,
         ) = row
@@ -135,6 +179,10 @@ class SQLiteWardrobeRepository:
             colors=tuple(json.loads(str(colors))),
             source=str(source),
             verification_status=str(verification_status),
+            asset_id=UUID(str(asset_id)) if asset_id else None,
+            analysis_job_id=UUID(str(analysis_job_id)) if analysis_job_id else None,
+            analysis_provider=str(analysis_provider) if analysis_provider else None,
+            analysis_unknown_attributes=tuple(json.loads(str(analysis_unknown_attributes))),
             created_at=datetime.fromisoformat(str(created_at)),
             updated_at=datetime.fromisoformat(str(updated_at)),
         )

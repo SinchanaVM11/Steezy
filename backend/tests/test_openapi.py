@@ -10,6 +10,7 @@ def test_openapi_covers_current_collaboration_contract() -> None:
         "/feedback",
         "/assets/images",
         "/analysis/garments",
+        "/analysis/garments/{job_id}/wardrobe-item",
     }
     assert document["paths"]["/health"]["get"]["responses"]["200"]["content"]
     assert document["paths"]["/wardrobe/items"]["post"]["responses"]["201"]["content"]

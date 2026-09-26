@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS wardrobe_items (
     colors TEXT NOT NULL,
     source TEXT NOT NULL,
     verification_status TEXT NOT NULL,
+    asset_id TEXT,
+    analysis_job_id TEXT UNIQUE,
+    analysis_provider TEXT,
+    analysis_unknown_attributes TEXT NOT NULL DEFAULT '[]',
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
@@ -38,3 +42,19 @@ def initialize_database(database_path: str) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(database_path) as connection:
         connection.executescript(SCHEMA)
+        columns = {
+            row[1] for row in connection.execute("PRAGMA table_info(wardrobe_items)")
+        }
+        additions = {
+            "asset_id": "TEXT",
+            "analysis_job_id": "TEXT",
+            "analysis_provider": "TEXT",
+            "analysis_unknown_attributes": "TEXT NOT NULL DEFAULT '[]'",
+        }
+        for name, definition in additions.items():
+            if name not in columns:
+                connection.execute(f"ALTER TABLE wardrobe_items ADD COLUMN {name} {definition}")
+        connection.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_wardrobe_items_analysis_job "
+            "ON wardrobe_items (analysis_job_id) WHERE analysis_job_id IS NOT NULL"
+        )

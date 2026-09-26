@@ -25,6 +25,7 @@ FastAPI application
   └── /feedback (validated, append-only learning signals)
   └── /assets/images (validated bytes → local asset reference)
   └── /analysis/garments (synchronous in-process analysis contract)
+      └── /analysis/garments/{job_id}/wardrobe-item (idempotent materialization)
 
 API errors use a stable envelope:
 
@@ -260,6 +261,11 @@ The current service is intentionally small enough to trace end to end:
      and sends only filename-derived metadata to the deterministic analyzer.
      `completed` and `failed` are result statuses, not durable queue states;
      missing assets/bytes fail with structured errors and no partial result.
+18. Materialization accepts only a completed job from the same in-process
+     analysis registry and verifies the request user. The analysis job ID is
+     stored with the wardrobe item as the idempotency key; repeated requests
+     return the existing item. Asset reference, provider, and unknown attributes
+     are retained without adding confidence or inventing predictions.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,

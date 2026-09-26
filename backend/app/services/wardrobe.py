@@ -33,6 +33,10 @@ class WardrobeService:
             colors=tuple(analysis.colors),
             source=data.source,
             verification_status="unverified",
+            asset_id=None,
+            analysis_job_id=None,
+            analysis_provider=None,
+            analysis_unknown_attributes=(),
             created_at=now,
             updated_at=now,
         )
