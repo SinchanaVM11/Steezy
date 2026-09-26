@@ -98,3 +98,9 @@ structured representation with provenance and a normalized image-derived
 36-dimensional embedding. User corrections are kept separate via
 `PATCH /wardrobe/items/{item_id}/verification`. Export the complete contract
 with `python backend/scripts/export_openapi.py --output /tmp/steezy-openapi.json`.
+
+`POST /wardrobe/search` provides user-scoped cosine similarity over
+materialized embeddings. Results are explicitly labeled low-level visual
+similarity; this is retrieval infrastructure, not recommendations or the
+Inspiration feature. See `docs/EVALUATION.md` for the reproducible contract
+harness and benchmark limitations.

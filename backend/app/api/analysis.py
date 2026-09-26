@@ -14,9 +14,12 @@ from app.services.analysis import (
 from app.api.assets import storage
 from app.repositories.wardrobe import SQLiteWardrobeRepository
 from app.services.materialization import MaterializationService
+from app.repositories.vectors import SQLiteVectorRepository
+from app.services.retrieval import RetrievalService
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 wardrobe_repository = SQLiteWardrobeRepository(get_settings().database_path)
+vector_repository = SQLiteVectorRepository(get_settings().database_path)
 analysis_service = AnalysisService(storage)
 
 
@@ -25,7 +28,11 @@ def get_analysis_service() -> AnalysisService:
 
 
 def get_materialization_service() -> MaterializationService:
-    return MaterializationService(wardrobe_repository, storage)
+    return MaterializationService(
+        wardrobe_repository,
+        storage,
+        RetrievalService(vector_repository, wardrobe_repository),
+    )
 
 
 @router.post(

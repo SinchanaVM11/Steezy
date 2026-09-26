@@ -35,6 +35,20 @@ CREATE TABLE IF NOT EXISTS feedback (
 
 CREATE INDEX IF NOT EXISTS idx_feedback_user_id
 ON feedback (user_id);
+
+CREATE TABLE IF NOT EXISTS wardrobe_embeddings (
+    wardrobe_item_id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    values_json TEXT NOT NULL,
+    model_name TEXT NOT NULL,
+    model_version TEXT NOT NULL,
+    dimension INTEGER NOT NULL,
+    source TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_wardrobe_embeddings_user_id
+ON wardrobe_embeddings (user_id);
 """
 
 

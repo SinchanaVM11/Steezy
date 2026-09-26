@@ -6,14 +6,19 @@ from app.models.wardrobe import WardrobeItem
 from app.repositories.wardrobe import WardrobeRepository
 from app.schemas.analysis import AnalysisJobResponse, AnalysisStatus
 from app.storage.assets import AssetStorage
+from app.services.retrieval import RetrievalService
 
 
 class MaterializationService:
     def __init__(
-        self, wardrobe_repository: WardrobeRepository, storage: AssetStorage
+        self,
+        wardrobe_repository: WardrobeRepository,
+        storage: AssetStorage,
+        retrieval: RetrievalService | None = None,
     ) -> None:
         self._wardrobe_repository = wardrobe_repository
         self._storage = storage
+        self._retrieval = retrieval
 
     async def materialize(
         self,
@@ -53,7 +58,12 @@ class MaterializationService:
             verified_attributes={},
         )
         try:
-            return self._wardrobe_repository.add(item)
+            created = self._wardrobe_repository.add(item)
+            if self._retrieval is not None:
+                self._retrieval.index_item(
+                    created.id, created.user_id, created.representation
+                )
+            return created
         except ApiError:
             raise
         except Exception as error:

@@ -26,6 +26,7 @@ FastAPI application
   └── /assets/images (validated bytes → local asset reference)
   └── /analysis/garments (synchronous in-process analysis contract)
       └── /analysis/garments/{job_id}/wardrobe-item (idempotent materialization)
+          └── /wardrobe/search (user-scoped cosine similarity)
           └── PATCH /wardrobe/items/{item_id}/verification
 
 API errors use a stable envelope:
@@ -171,14 +172,22 @@ exist.
   reference, and user-verified attributes separately on wardrobe items.
 - Expose an explicit verification endpoint; verification never overwrites AI
   predictions.
-- CLIP classification, production garment detection, and vector retrieval are
-  intentionally deferred.
+- CLIP classification and production garment detection remain deferred.
 
-### Phase 4 — representation and retrieval
+### Phase 4 — vector retrieval foundation (complete)
 
-- Add embedding provider abstractions and explicit cosine-similarity retrieval.
-- Persist model metadata and vector dimensions.
-- Add reproducible experiments, latency measurements, and evaluation docs.
+- Persist materialized representation embeddings in a separate vector
+  repository with model name/version, dimension, source, user, item, and
+  timestamp metadata.
+- Expose user-scoped cosine similarity search with configurable top-k and
+  threshold. Results return actual scores and retrieval metadata.
+- Use SQLite JSON storage locally because PostgreSQL/pgvector is not present in
+  the dependency/runtime setup; the `VectorRepository` protocol is the seam
+  for a future pgvector adapter.
+- Keep semantics explicitly `baseline_low_level_visual_similarity`; no
+  recommendation ranking or Inspiration feature is included.
+- Track the deterministic contract harness and its lack of benchmark metrics
+  in `docs/EVALUATION.md`.
 
 ### Phase 5 — context-aware recommendations
 
@@ -284,10 +293,15 @@ The current service is intentionally small enough to trace end to end:
 20. `docs/decisions/ADR-003-evaluated-model-providers.md` records the provider
      audit and evaluation gate. The checked-in fixtures are regression evidence,
      not a substitute for a labeled fashion benchmark or calibrated confidence.
-20. `FashionItemRepresentation` stores predicted values and provenance in
+21. `FashionItemRepresentation` stores predicted values and provenance in
      `representation`; `verified_attributes` and `verification_status` are
      separate user-owned state. `PATCH /wardrobe/items/{item_id}/verification`
      is the only current verification write path.
+22. Materialization indexes only representations containing a validated
+     embedding. `SQLiteVectorRepository` filters by user before cosine scoring,
+     rejects dimension mismatches at indexing, and returns deterministic score
+     ordering. Manual items without embeddings remain in the wardrobe but are
+     absent from vector search.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,
