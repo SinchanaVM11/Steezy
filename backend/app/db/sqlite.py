@@ -17,6 +17,18 @@ CREATE TABLE IF NOT EXISTS wardrobe_items (
 
 CREATE INDEX IF NOT EXISTS idx_wardrobe_items_user_id
 ON wardrobe_items (user_id);
+
+CREATE TABLE IF NOT EXISTS feedback (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    wardrobe_item_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    context TEXT,
+    created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_user_id
+ON feedback (user_id);
 """
 
 

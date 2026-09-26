@@ -12,6 +12,8 @@ from app.db.sqlite import initialize_database
 class WardrobeRepository(Protocol):
     def add(self, item: WardrobeItem) -> WardrobeItem: ...
 
+    def get_for_user(self, item_id: UUID, user_id: UUID) -> WardrobeItem | None: ...
+
     def list_for_user(self, user_id: UUID) -> Iterable[WardrobeItem]: ...
 
 
@@ -27,6 +29,10 @@ class InMemoryWardrobeRepository:
 
     def list_for_user(self, user_id: UUID) -> list[WardrobeItem]:
         return [item for item in self._items.values() if item.user_id == user_id]
+
+    def get_for_user(self, item_id: UUID, user_id: UUID) -> WardrobeItem | None:
+        item = self._items.get(item_id)
+        return item if item is not None and item.user_id == user_id else None
 
 
 class SQLiteWardrobeRepository:
@@ -72,6 +78,19 @@ class SQLiteWardrobeRepository:
                 (str(user_id),),
             ).fetchall()
         return [self._from_row(row) for row in rows]
+
+    def get_for_user(self, item_id: UUID, user_id: UUID) -> WardrobeItem | None:
+        with sqlite3.connect(self._database_path) as connection:
+            row = connection.execute(
+                """
+                SELECT id, user_id, category, subcategory, colors, source,
+                       verification_status, created_at, updated_at
+                FROM wardrobe_items
+                WHERE id = ? AND user_id = ?
+                """,
+                (str(item_id), str(user_id)),
+            ).fetchone()
+        return self._from_row(row) if row is not None else None
 
     @staticmethod
     def _from_row(row: tuple[object, ...]) -> WardrobeItem:

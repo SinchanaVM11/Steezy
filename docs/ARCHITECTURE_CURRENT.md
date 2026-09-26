@@ -22,6 +22,7 @@ FastAPI application
   └── GET /health
   └── /wardrobe/items (validated contract, SQLite-backed local persistence)
       └── deterministic metadata analyzer (no image/model/network access)
+  └── /feedback (validated, append-only learning signals)
 
 configuration
   └── environment-backed settings (no secrets committed)
@@ -101,6 +102,15 @@ exist.
   inventing a prediction or confidence score.
 - Keep the analyzer replaceable before image-based perception is introduced.
 
+### Phase 2.6 — feedback capture (current)
+
+- Accept a small allow-list of explicit feedback actions for a wardrobe item.
+- Verify the referenced item belongs to the submitting user before recording.
+- Persist feedback append-only in SQLite and retain an in-memory adapter for
+  isolated tests.
+- Do not rank, train, update profiles, or claim that feedback has changed a
+  model.
+
 ### Phase 3 — fashion perception baseline
 
 - Add image validation and a replaceable perception provider.
@@ -176,6 +186,10 @@ The current service is intentionally small enough to trace end to end:
     provider identifier plus unknown attributes. A future image analyzer can
     implement the same `GarmentAnalyzer` protocol without changing the route or
     repository boundaries.
+11. Feedback is an event log, not a preference model. The service validates
+    ownership, writes one immutable event, and exposes user-scoped reads. The
+    action list and raw context are transparent inputs for a future learning
+    phase; this implementation performs no learning.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,
