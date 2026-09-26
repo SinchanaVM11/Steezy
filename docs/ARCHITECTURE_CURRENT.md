@@ -15,7 +15,7 @@ the source of truth for the long-term product direction.
 docs/MASTER_ENGINEERING_SPECIFICATION.txt
 ```
 
-The foundation adds only these executable boundaries:
+The foundation adds these executable boundaries:
 
 ```text
 FastAPI application
@@ -24,8 +24,9 @@ FastAPI application
 configuration
   └── environment-backed settings (no secrets committed)
 
-mobile/
-  └── documented Expo/React Native boundary (not runnable yet)
+Expo SDK 57 mobile application
+  ├── native-stack navigation: Home, Wardrobe, Inspiration
+  └── typed health client → GET /health
 ```
 
 `GET /health` is a process liveness check. It does not prove database
@@ -63,7 +64,7 @@ exist.
 
 ## Phase plan
 
-### Phase 1 — engineering foundation (current)
+### Phase 1 — engineering foundation (complete)
 
 - Establish a small FastAPI application factory and health route.
 - Load non-secret runtime settings from environment variables.
@@ -71,6 +72,14 @@ exist.
   database, and AI providers.
 - Add a focused HTTP test and contributor setup guidance.
 - Keep the mobile directory as a documented client boundary.
+
+### Phase 1.5 — mobile application shell (current)
+
+- Establish an Expo SDK 57 TypeScript application entry point.
+- Establish a small native-stack navigation boundary.
+- Validate and test the existing backend health response from a typed client.
+- Keep Wardrobe and Inspiration as clearly labeled placeholders until their
+  backend contracts exist.
 
 ### Phase 2 — wardrobe contract and persistence
 
@@ -136,6 +145,8 @@ The current service is intentionally small enough to trace end to end:
    FastAPI's test client.
 5. `core/config.py` demonstrates the future configuration seam without making
    configuration a dependency of the health route yet.
+6. `mobile/src/api/health.tsx` normalizes the configured base URL, calls the
+   backend health endpoint, and rejects transport or response-contract errors.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,
