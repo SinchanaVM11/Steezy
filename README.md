@@ -46,10 +46,15 @@ The current HTTP contract can be exported and validated without network access:
 python backend/scripts/export_openapi.py --output /tmp/steezy-openapi.json
 ```
 
-The generated document describes the health, wardrobe, and feedback operations,
-including successful response models and the shared structured error envelope.
+The generated document describes the health, wardrobe, feedback, and image
+asset operations, including successful response models and the shared
+structured error envelope.
 The Expo client consumes these same route paths through typed clients; its
 runtime user ID remains explicit until authentication is added.
+
+Image ingestion currently stores validated JPEG, PNG, or WebP bytes under
+`.data/assets` outside SQLite and returns a generated asset reference. It does
+not inspect images or invoke a model.
 
 Run the backend checks with:
 
@@ -71,4 +76,7 @@ The `mobile/` directory is a deliberate boundary for the future Expo client. It 
 
 ## Current limitations
 
-There is no authentication, persistence, image upload, garment analysis, mobile UI, or recommendation engine yet. These are intentionally deferred and should be implemented incrementally with evaluation and privacy documentation.
+There is no authentication, image analysis, or recommendation engine yet.
+Image upload is currently limited to safe byte ingestion; it does not infer
+garment attributes. These capabilities should be implemented incrementally
+with evaluation and privacy documentation.

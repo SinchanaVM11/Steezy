@@ -14,6 +14,7 @@ REQUIRED_OPERATIONS = {
     ("/wardrobe/items", "post"),
     ("/feedback", "get"),
     ("/feedback", "post"),
+    ("/assets/images", "post"),
 }
 
 

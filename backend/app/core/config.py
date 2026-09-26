@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     api_port: int = 8000
     log_level: str = "INFO"
     database_path: str = ".data/steezy.sqlite3"
+    asset_storage_path: str = ".data/assets"
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -23,6 +23,7 @@ FastAPI application
   └── /wardrobe/items (validated contract, SQLite-backed local persistence)
       └── deterministic metadata analyzer (no image/model/network access)
   └── /feedback (validated, append-only learning signals)
+  └── /assets/images (validated bytes → local asset reference)
 
 API errors use a stable envelope:
 
@@ -248,6 +249,11 @@ The current service is intentionally small enough to trace end to end:
      error statuses. `backend/tests/test_openapi.py` protects stable paths and
      error-schema keys; the export script is the local collaboration artifact,
      not a generated runtime dependency.
+16. Asset ingestion deliberately stops at safe byte storage. The generated
+     UUID filename prevents user-controlled path traversal; user directories
+     provide filesystem isolation, while the returned `storage_key` is an
+     internal reference rather than a public path. Future image analysis can
+     consume this reference through a separate provider boundary.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,

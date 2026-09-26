@@ -8,6 +8,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.health import router as health_router
 from app.api.feedback import router as feedback_router
+from app.api.assets import router as assets_router
 from app.api.wardrobe import router as wardrobe_router
 from app.core.errors import ApiError
 from app.core.observability import correlation_id, valid_correlation_id
@@ -32,6 +33,7 @@ def create_app() -> FastAPI:
     application.include_router(health_router)
     application.include_router(wardrobe_router)
     application.include_router(feedback_router)
+    application.include_router(assets_router)
     application.add_middleware(CorrelationMiddleware)
 
     @application.exception_handler(RequestValidationError)
