@@ -26,6 +26,8 @@ than hardcoding it into source code.
 - `Wardrobe` and `Inspiration` are explicit placeholders for later vertical
   slices, not mocked product functionality.
 - `src/api/health.tsx` validates the response shape before exposing it to UI
+- `src/api/wardrobe.ts` provides a user-scoped typed collection client without
+  introducing a screen or local persistence.
   state.
 
 Planned client responsibilities:

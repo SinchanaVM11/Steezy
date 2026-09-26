@@ -20,6 +20,7 @@ The foundation adds these executable boundaries:
 ```text
 FastAPI application
   └── GET /health
+  └── /wardrobe/items (validated contract, in-memory development adapter)
 
 configuration
   └── environment-backed settings (no secrets committed)
@@ -73,7 +74,7 @@ exist.
 - Add a focused HTTP test and contributor setup guidance.
 - Keep the mobile directory as a documented client boundary.
 
-### Phase 1.5 — mobile application shell (current)
+### Phase 1.5 — mobile application shell (complete)
 
 - Establish an Expo SDK 57 TypeScript application entry point.
 - Establish a small native-stack navigation boundary.
@@ -81,10 +82,11 @@ exist.
 - Keep Wardrobe and Inspiration as clearly labeled placeholders until their
   backend contracts exist.
 
-### Phase 2 — wardrobe contract and persistence
+### Phase 2 — wardrobe contract (current)
 
 - Define validated wardrobe request/response schemas and domain models.
-- Introduce PostgreSQL migrations and repository interfaces.
+- Introduce a repository protocol and an in-memory development adapter.
+- Expose user-scoped create/list endpoints without claiming durable persistence.
 - Add explicit image metadata and privacy/deletion rules.
 - Add API contract tests before implementing mobile screens.
 
@@ -147,6 +149,13 @@ The current service is intentionally small enough to trace end to end:
    configuration a dependency of the health route yet.
 6. `mobile/src/api/health.tsx` normalizes the configured base URL, calls the
    backend health endpoint, and rejects transport or response-contract errors.
+7. The wardrobe route depends on a service, the service depends on a repository
+   protocol, and the current adapter stores items only for the lifetime of the
+   process. This allows PostgreSQL to replace the adapter without changing the
+   HTTP contract.
+8. Wardrobe items intentionally contain user-entered structural fields only.
+   AI predictions, confidence, image metadata, and embeddings belong to later
+   slices and must not be implied by this API.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,
