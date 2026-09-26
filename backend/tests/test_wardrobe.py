@@ -23,6 +23,7 @@ def test_create_and_list_wardrobe_items() -> None:
     assert created["user_id"] == str(user_id)
     assert created["verification_status"] == "unverified"
     assert created["source"] == "user"
+    assert created["category"] == "shirt"
     assert client.get(f"/wardrobe/items?user_id={user_id}").json() == [created]
 
 
@@ -33,6 +34,17 @@ def test_create_wardrobe_item_rejects_invalid_category() -> None:
     )
 
     assert response.status_code == 422
+
+
+def test_create_wardrobe_item_applies_deterministic_metadata_baseline() -> None:
+    response = client.post(
+        "/wardrobe/items",
+        json={"user_id": str(uuid4()), "category": "TShirt", "colors": ["grey"]},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["category"] == "t-shirt"
+    assert response.json()["colors"] == ["gray"]
 
 
 def test_list_wardrobe_items_is_scoped_to_user() -> None:

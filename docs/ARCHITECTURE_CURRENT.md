@@ -21,6 +21,7 @@ The foundation adds these executable boundaries:
 FastAPI application
   └── GET /health
   └── /wardrobe/items (validated contract, SQLite-backed local persistence)
+      └── deterministic metadata analyzer (no image/model/network access)
 
 configuration
   └── environment-backed settings (no secrets committed)
@@ -92,6 +93,14 @@ exist.
 - Add explicit image metadata and privacy/deletion rules.
 - Add API contract tests before implementing mobile screens.
 
+### Phase 2.5 — deterministic metadata analysis (current)
+
+- Normalize user-provided garment category and color labels through a dedicated
+  analyzer boundary.
+- Preserve unknown categories as user input and mark them unknown rather than
+  inventing a prediction or confidence score.
+- Keep the analyzer replaceable before image-based perception is introduced.
+
 ### Phase 3 — fashion perception baseline
 
 - Add image validation and a replaceable perception provider.
@@ -162,6 +171,11 @@ The current service is intentionally small enough to trace end to end:
    a local development persistence step, not a production migration system.
    Rows are serialized with standard-library SQLite and JSON; the repository
    reconstructs domain objects before returning them to the service.
+10. `DeterministicMetadataAnalyzer` is intentionally not computer vision. It
+    receives structured metadata, applies transparent aliases, and returns a
+    provider identifier plus unknown attributes. A future image analyzer can
+    implement the same `GarmentAnalyzer` protocol without changing the route or
+    repository boundaries.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,
