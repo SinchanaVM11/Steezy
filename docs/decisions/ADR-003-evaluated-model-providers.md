@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted for the provider-evaluation milestone.
+Superseded as the default-provider decision by the audit in
+`docs/evaluations/MODEL_PROVIDER_EVALUATION.md`. The implementation remains
+the safe repository baseline while pretrained candidates are evaluated.
 
 ## Audit
 
@@ -13,7 +15,7 @@ content: changing pixels can change the hash arbitrarily, and similar images
 have no reason to be nearby. There are no cached pretrained weights in the
 development environment.
 
-## Decision
+## Previous decision
 
 Replace the hash embedding as the default with a deterministic
 `VisualFeatureEmbedding` provider. It represents the actual image using
@@ -42,6 +44,5 @@ before becoming the default.
 
 The default pipeline remains offline and has no secret or download requirement,
 but the embedding is still not suitable for semantic retrieval. Vector
-storage and Inspiration remain deferred. Pretrained providers may be added
-behind the existing protocols once their weights and evaluation evidence are
-available.
+storage and Inspiration remain deferred. The follow-up audit recommends
+FashionCLIP 2.0 as the next experiment, not as a shipped default.
