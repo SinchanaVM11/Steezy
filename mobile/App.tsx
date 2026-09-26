@@ -1,11 +1,13 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { HealthStatus } from "./src/api/health";
 import { API_BASE_URL, USER_ID } from "./src/config";
 import { useWardrobe } from "./src/wardrobe/useWardrobe";
+import { FEEDBACK_ACTIONS } from "./src/api/feedback";
+import { FeedbackSubmissionState, useFeedback } from "./src/feedback/useFeedback";
 
 type RootStackParamList = {
   Home: undefined;
@@ -41,6 +43,7 @@ function PlaceholderScreen({ title, description }: { title: string; description:
 
 function WardrobeScreen() {
   const { state, reload } = useWardrobe(USER_ID, API_BASE_URL);
+  const { submit, stateFor } = useFeedback(USER_ID, API_BASE_URL);
 
   return (
     <View style={styles.container}>
@@ -61,13 +64,61 @@ function WardrobeScreen() {
       {state.status === "success" && (
         <View>
           {state.items.map((item) => (
-            <Text key={item.id} style={styles.body}>
-              {item.category} · {item.colors.join(", ") || "color not specified"}
-            </Text>
+            <WardrobeItemView
+              key={item.id}
+              item={item}
+              feedback={stateFor(item.id)}
+              onSubmit={submit}
+            />
           ))}
         </View>
       )}
     </View>
+  );
+}
+
+function WardrobeItemView({
+  item,
+  feedback,
+  onSubmit,
+}: {
+  item: {
+    id: string;
+    category: string;
+    colors: string[];
+  };
+  feedback: FeedbackSubmissionState;
+  onSubmit: ReturnType<typeof useFeedback>["submit"];
+}) {
+  return (
+    <View style={styles.item}>
+              <Text style={styles.body}>
+                {item.category} · {item.colors.join(", ") || "color not specified"}
+              </Text>
+              <View style={styles.actions}>
+                {FEEDBACK_ACTIONS.slice(0, 2).map((action) => {
+                  return (
+                    <Pressable
+                      key={action}
+                      disabled={feedback.status === "submitting"}
+                      onPress={() => void onSubmit(item.id, action)}
+                    >
+                      <Text style={styles.action}>
+                        {feedback.status === "submitting" ? "Saving…" : action}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              {feedback.status === "success" && (
+                <Text style={styles.feedbackSuccess}>Feedback saved.</Text>
+              )}
+              {feedback.status === "error" && (
+                <Text style={styles.feedbackError}>
+                  {feedback.message}
+                </Text>
+              )}
+            </View>
   );
 }
 
@@ -119,5 +170,20 @@ const styles = StyleSheet.create({
     color: "#6D4C41",
     fontSize: 16,
     fontWeight: "700",
+  },
+  item: {
+    gap: 8,
+  },
+  actions: {
+    flexDirection: "row",
+    gap: 16,
+  },
+  feedbackSuccess: {
+    color: "#3F6B4A",
+    fontSize: 14,
+  },
+  feedbackError: {
+    color: "#9B3A2E",
+    fontSize: 14,
   },
 });

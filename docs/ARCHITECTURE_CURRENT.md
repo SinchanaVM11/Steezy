@@ -31,6 +31,7 @@ Expo SDK 57 mobile application
   ├── native-stack navigation: Home, Wardrobe, Inspiration
   ├── typed health client → GET /health
   └── typed wardrobe state → GET /wardrobe/items?user_id=…
+      └── item feedback submission → POST /feedback
 ```
 
 `GET /health` is a process liveness check. It does not prove database
@@ -118,6 +119,13 @@ exist.
 - Make loading, empty, success, and API/configuration-error states explicit.
 - Keep user identity an explicit runtime configuration value until auth exists.
 
+### Phase 2.8 — mobile feedback interaction (current)
+
+- Submit explicit `like`/`dislike` actions from each loaded wardrobe item.
+- Track submission state per item and prevent duplicate in-flight requests.
+- Treat malformed and non-success responses as visible errors; do not claim
+  ranking or model learning.
+
 ### Phase 3 — fashion perception baseline
 
 - Add image validation and a replaceable perception provider.
@@ -200,6 +208,10 @@ The current service is intentionally small enough to trace end to end:
 12. `useWardrobe` is the mobile state boundary: it invokes the typed API client,
     maps results into explicit UI states, and preserves prior items on reload
     failure. It does not own authentication, persistence, or business logic.
+13. `useFeedback` is a separate item-scoped interaction boundary. Its in-flight
+     set prevents duplicate submissions for the same item while allowing
+     different items to submit independently. The response is only a stored
+     acknowledgement; it does not update recommendations or a model.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,
