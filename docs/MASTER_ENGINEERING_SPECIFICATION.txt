@@ -1,0 +1,1557 @@
+# STEEZY — MASTER ENGINEERING SPECIFICATION
+
+## 0. ROLE
+
+You are acting as the senior software architect, ML engineer, backend engineer, computer-vision engineer, and technical lead for a serious portfolio/research project called **Steezy**.
+
+The project is being developed by a 7th-semester CSE student whose goal is to become a Software/AI Engineer specializing in AI applications for Fashion Technology.
+
+Do NOT treat Steezy as a toy app, college demo, chatbot, or simple LLM wrapper.
+
+The goal is to build a technically credible system demonstrating:
+
+* Software engineering
+* Backend engineering
+* Computer vision
+* Multimodal AI
+* Fashion image understanding
+* Structured data modeling
+* Embeddings
+* Vector retrieval
+* Recommendation systems
+* Personalization
+* Context-aware ranking
+* Explainable recommendations
+* Feedback-driven learning
+* Data pipelines
+* Experimentation and evaluation
+* Deployment and system design
+
+The application UI is important, but the intelligence underneath the UI is the primary engineering objective.
+
+---
+
+# 1. CURRENT PROJECT
+
+Repository:
+
+Steezy
+
+Current structure:
+
+apps/
+mobile/
+backend/
+
+Mobile:
+
+* React Native
+* Expo
+* TypeScript
+
+Backend:
+
+* Python
+* FastAPI
+
+Existing backend AI components include:
+
+app/
+ai/
+garment_analyzer.py
+color_analyzer.py
+
+api/
+garments.py
+feedback.py
+health.py
+
+services/
+garment_service.py
+
+Existing wardrobe persistence currently uses AsyncStorage on mobile.
+
+Do NOT throw away the existing implementation.
+
+First inspect the repository and understand the current architecture.
+
+Before modifying anything:
+
+1. Inspect the complete repository structure.
+2. Identify existing screens.
+3. Identify navigation.
+4. Identify services.
+5. Identify API endpoints.
+6. Identify data models.
+7. Identify AI modules.
+8. Identify duplicated logic.
+9. Identify hardcoded values.
+10. Identify security/privacy problems.
+11. Identify code that should be retained.
+12. Identify code that should eventually be replaced.
+
+Create:
+
+docs/ARCHITECTURE_CURRENT.md
+
+containing the findings.
+
+---
+
+# 2. IMPORTANT DEVELOPMENT RULE
+
+Do NOT attempt to implement the entire future vision in one step.
+
+Work in phases.
+
+For every phase:
+
+1. Explain the technical problem.
+2. Explain the architecture.
+3. Implement it.
+4. Add tests.
+5. Add documentation.
+6. Explain important implementation decisions.
+7. Identify trade-offs.
+8. Provide commands to run it.
+9. Provide a reverse-engineering explanation so the developer can study what was built.
+
+The developer is intentionally using AI-assisted coding to accelerate implementation and then plans to reverse-engineer the system.
+
+Therefore:
+
+DO NOT hide complexity behind unexplained abstractions.
+
+Prefer readable, modular, production-style code.
+
+---
+
+# 3. CORE PRODUCT IDENTITY
+
+Steezy is:
+
+> A multimodal AI system that learns to understand a user's fashion world and provides personalized, context-aware fashion intelligence.
+
+The system should progressively understand:
+
+* garments
+* garment attributes
+* visual relationships
+* style
+* personal preferences
+* wardrobe inventory
+* inspiration images
+* context
+* user feedback
+* historical choices
+
+The system should eventually move from:
+
+IMAGE → UNDERSTANDING → REPRESENTATION → RETRIEVAL → RECOMMENDATION → FEEDBACK → LEARNING
+
+---
+
+# 4. CORE ARCHITECTURE
+
+Target architecture:
+
+Mobile App
+↓
+FastAPI API
+↓
+Application Services
+↓
+AI / ML Services
+↓
+Data Layer
+↓
+PostgreSQL + Vector Database capability
+↓
+Object/File Storage
+
+Logical components:
+
+1. Mobile Client
+2. API Layer
+3. Authentication
+4. Wardrobe Service
+5. Image Processing Pipeline
+6. Garment Perception Engine
+7. Fashion Attribute Engine
+8. Fashion Representation Engine
+9. Embedding Service
+10. Vector Retrieval
+11. User Profile Service
+12. Context Service
+13. Recommendation Engine
+14. Ranking Engine
+15. Explanation Engine
+16. Feedback/Learning System
+17. Evaluation/Experimentation System
+
+Do not implement all components immediately.
+
+Build them incrementally.
+
+---
+
+# 5. PHASE 1 — ENGINEERING FOUNDATION
+
+Before advanced AI, establish clean engineering foundations.
+
+## Requirements
+
+Backend:
+
+* FastAPI
+* Pydantic
+* typed Python
+* service/repository separation
+* structured error handling
+* request validation
+* logging
+* configuration management
+* environment variables
+* test suite
+
+Database:
+
+Use PostgreSQL as the long-term persistence layer.
+
+Do NOT hardcode:
+
+* IP addresses
+* API keys
+* tokens
+* passwords
+* usernames
+* machine-specific paths
+* personal information
+
+Use:
+
+.env
+
+and provide:
+
+.env.example
+
+Never commit .env.
+
+Add/update:
+
+.gitignore
+
+to protect secrets and local development files.
+
+## API structure
+
+Use:
+
+app/
+api/
+services/
+repositories/
+models/
+schemas/
+ai/
+core/
+db/
+tests/
+
+Do not put business logic directly inside route handlers.
+
+---
+
+# 6. PHASE 2 — DIGITAL WARDROBE
+
+The wardrobe is the foundation of the entire system.
+
+A wardrobe item must be a structured entity.
+
+Example conceptual schema:
+
+WardrobeItem:
+
+id
+user_id
+image_id
+category
+subcategory
+colors
+pattern
+material
+fit
+silhouette
+sleeve
+length
+style_tags
+season
+occasion
+embedding_id
+created_at
+updated_at
+source
+verification_status
+
+Do not assume every field can initially be predicted automatically.
+
+Separate:
+
+AI predicted attributes
+
+from:
+
+User verified attributes
+
+Example:
+
+attribute:
+predicted_value
+confidence
+source
+verified_by_user
+
+This allows the system to improve over time.
+
+---
+
+# 7. GARMENT IMAGE PIPELINE
+
+Current implementation uses:
+
+CLIP zero-shot image classification.
+
+Treat this as a BASELINE.
+
+Do not pretend it is production-quality garment detection.
+
+Current baseline:
+
+Image
+↓
+CLIP
+↓
+Category prediction
+
+This should become:
+
+Image
+↓
+Image validation
+↓
+Preprocessing
+↓
+Garment localization/segmentation
+↓
+Garment classification
+↓
+Attribute extraction
+↓
+Color extraction
+↓
+Embedding generation
+↓
+Structured garment representation
+↓
+User verification
+↓
+Database
+
+---
+
+# 8. GARMENT PERCEPTION
+
+The system should eventually detect individual garments rather than classify the entire image.
+
+For example:
+
+Input:
+
+photo of a person wearing:
+
+* shirt
+* trousers
+* shoes
+
+Output:
+
+Garment 1:
+category = shirt
+
+Garment 2:
+category = trousers
+
+Garment 3:
+category = shoes
+
+The system should preserve bounding boxes/masks where possible.
+
+Store:
+
+* category
+* bounding box
+* segmentation mask reference
+* confidence
+* source model
+
+Do not claim accuracy without evaluation.
+
+---
+
+# 9. FASHION ATTRIBUTE EXTRACTION
+
+For each garment, progressively extract:
+
+## Basic
+
+* category
+* subcategory
+* dominant colors
+
+## Intermediate
+
+* pattern
+* sleeve length
+* garment length
+* fit
+* silhouette
+* material where visually inferable
+
+## Advanced
+
+* style characteristics
+* visual descriptors
+* compatibility signals
+
+Important:
+
+If the model cannot reliably infer an attribute, return:
+
+unknown
+
+rather than inventing an answer.
+
+Every prediction should have:
+
+value
+confidence
+model/source
+
+---
+
+# 10. COLOR ANALYSIS
+
+Current ColorAnalyzer is useful as an initial baseline.
+
+Improve it carefully.
+
+Pipeline:
+
+Image
+↓
+Foreground segmentation
+↓
+Garment region
+↓
+Pixel sampling
+↓
+Color clustering
+↓
+Human-readable color names
+
+Do not use hardcoded:
+
+"White shirt"
+
+or:
+
+"94% confidence"
+
+unless the system actually predicted those values.
+
+Never fabricate confidence.
+
+Return actual model output.
+
+Evaluate color extraction on representative images.
+
+---
+
+# 11. FASHION REPRESENTATION
+
+Create a unified fashion representation.
+
+Conceptually:
+
+FashionItemRepresentation:
+
+{
+category,
+attributes,
+colors,
+style_features,
+visual_embedding,
+metadata
+}
+
+The embedding represents visual/fashion similarity.
+
+This enables:
+
+* similarity search
+* inspiration matching
+* wardrobe retrieval
+* duplicate detection
+* recommendation candidates
+
+Do not immediately build a custom neural network.
+
+Start with strong pretrained representations.
+
+Then benchmark alternatives.
+
+---
+
+# 12. EMBEDDING SYSTEM
+
+Create an embedding service abstraction.
+
+Example:
+
+EmbeddingService
+
+Responsibilities:
+
+* generate embedding
+* normalize embedding
+* store embedding
+* retrieve embedding
+* compare embeddings
+
+Do not hardcode one model everywhere.
+
+Use an interface allowing future models.
+
+Example:
+
+EmbeddingProvider
+
+Implement:
+
+CLIPEmbeddingProvider
+
+Later allow:
+
+FashionSpecificEmbeddingProvider
+
+MultimodalEmbeddingProvider
+
+Store:
+
+model_name
+model_version
+embedding_dimension
+created_at
+
+This makes experiments reproducible.
+
+---
+
+# 13. VECTOR SEARCH
+
+Eventually use PostgreSQL with pgvector or an equivalent vector database.
+
+Use vector search for:
+
+* visually similar garments
+* inspiration retrieval
+* wardrobe matching
+* candidate generation
+
+Example:
+
+Inspiration image
+↓
+embedding
+↓
+vector search
+↓
+closest wardrobe items
+
+Similarity should be measured using an explicit metric such as cosine similarity.
+
+Do not describe vector search as "AI magic."
+
+Document:
+
+* embedding model
+* dimensionality
+* similarity metric
+* indexing strategy
+* retrieval threshold
+* top-k
+
+---
+
+# 14. PERSONAL STYLE PROFILE
+
+Do not create a static personality quiz as the primary personalization mechanism.
+
+The system should learn from:
+
+Explicit preferences:
+
+* preferred colors
+* preferred silhouettes
+* preferred styles
+* preferred categories
+
+Behavior:
+
+* viewed
+* liked
+* disliked
+* saved
+* worn
+* skipped
+* recreated
+
+History:
+
+* previous outfits
+* previous recommendations
+* previous feedback
+
+Create:
+
+UserStyleProfile
+
+The profile should evolve.
+
+Conceptually:
+
+# UserStyleProfile
+
+explicit preferences
++
+behavioral signals
++
+visual preferences
++
+historical interactions
+
+---
+
+# 15. CONTEXT ENGINE
+
+Recommendations must depend on context.
+
+Potential inputs:
+
+* weather
+* temperature
+* occasion
+* activity
+* time
+* user's available wardrobe
+* user preferences
+
+Do not hardcode weather.
+
+Create:
+
+ContextService
+
+Example:
+
+Context:
+
+temperature
+weather_condition
+occasion
+activity
+time
+location_context
+
+Context should be separated from recommendation logic.
+
+---
+
+# 16. OUTFIT GENERATION
+
+An outfit is a combination of wardrobe items.
+
+Example:
+
+Outfit:
+
+top
+bottom
+shoes
+optional outerwear
+optional accessory
+
+Initially use constrained candidate generation.
+
+Do not generate unlimited combinations.
+
+Example:
+
+Wardrobe:
+
+5 tops
+5 bottoms
+4 shoes
+
+Candidate generator creates combinations.
+
+Then filter invalid combinations.
+
+Then rank remaining combinations.
+
+---
+
+# 17. RECOMMENDATION ENGINE
+
+Do not start with an LLM.
+
+Start with a transparent baseline.
+
+Example:
+
+RecommendationScore =
+
+w1 * visual_compatibility
++
+w2 * user_preference
++
+w3 * context_fit
++
+w4 * historical_preference
++
+w5 * wardrobe_availability
+
+Weights should be configurable.
+
+Do not hide them inside code.
+
+Create:
+
+RecommendationEngine
+
+with:
+
+generate_candidates()
+filter_candidates()
+score_candidates()
+rank_candidates()
+
+This makes the system explainable and testable.
+
+---
+
+# 18. RECOMMENDATION RANKING
+
+Eventually experiment with:
+
+Baseline:
+weighted scoring
+
+Then:
+
+content-based recommendation
+
+Then:
+
+embedding-based retrieval
+
+Then potentially:
+
+learning-to-rank
+
+Do not jump immediately to deep reinforcement learning.
+
+The system should first establish a measurable baseline.
+
+---
+
+# 19. EXPLAINABLE RECOMMENDATIONS
+
+Every recommendation should retain its scoring signals.
+
+Example:
+
+Recommendation:
+
+Outfit A
+
+Signals:
+
+visual compatibility: 0.89
+user preference: 0.82
+context suitability: 0.91
+historical preference: 0.74
+
+Then generate explanation from these actual signals.
+
+Example:
+
+"Recommended because it matches your preferred neutral palette and has high compatibility with outfits you previously saved."
+
+Do not allow an LLM to invent reasons that are not present in the recommendation data.
+
+---
+
+# 20. INSPIRATION ENGINE
+
+User uploads an inspiration image.
+
+Pipeline:
+
+Image
+↓
+Garment perception
+↓
+Fashion attributes
+↓
+Fashion embedding
+↓
+Vector retrieval
+↓
+Wardrobe candidates
+↓
+Compatibility ranking
+↓
+Recreation result
+
+Output:
+
+"This inspiration contains 4 visually relevant components."
+
+Then:
+
+3/4 components can be approximated from the user's wardrobe.
+
+The system should show which wardrobe items correspond to which inspiration components.
+
+This should become one of Steezy's major demonstration features.
+
+---
+
+# 21. USER FEEDBACK LOOP
+
+Every recommendation should support feedback.
+
+Examples:
+
+* Like
+* Dislike
+* Save
+* Skip
+* Wear
+* Not relevant
+
+Store:
+
+user_id
+recommendation_id
+action
+timestamp
+context
+
+Feedback should eventually influence the user profile.
+
+Do not claim the model has learned unless the profile/model actually changes.
+
+---
+
+# 22. LEARNING LOOP
+
+Long-term architecture:
+
+Recommendation
+↓
+User interaction
+↓
+Feedback
+↓
+Feature update
+↓
+Profile update
+↓
+Future ranking
+
+Eventually experiment with:
+
+* preference updates
+* collaborative signals
+* personalized ranking
+* implicit feedback
+* explicit feedback
+
+Evaluate whether recommendations actually improve after feedback.
+
+---
+
+# 23. EVALUATION
+
+This is mandatory.
+
+Do not build AI features without evaluation.
+
+Create:
+
+experiments/
+
+and:
+
+docs/EVALUATION.md
+
+Possible metrics:
+
+## Garment classification
+
+Accuracy
+Precision
+Recall
+F1
+
+## Attribute extraction
+
+Per-attribute accuracy
+F1
+
+## Retrieval
+
+Recall@K
+Precision@K
+MRR
+
+## Recommendation
+
+Precision@K
+Recall@K
+NDCG@K
+
+## Personalization
+
+Preference prediction accuracy
+
+## System
+
+Latency
+Memory
+API response time
+Model inference time
+
+## Human evaluation
+
+Users rate:
+
+* relevance
+* visual similarity
+* usefulness
+* recommendation quality
+
+---
+
+# 24. DATASET STRATEGY
+
+Do not immediately scrape random fashion websites.
+
+Start with public datasets where licensing permits use.
+
+Research datasets for:
+
+* clothing classification
+* fashion attributes
+* fashion retrieval
+* fashion compatibility
+* fashion segmentation
+
+Maintain:
+
+data/
+
+metadata/
+
+and document dataset licenses.
+
+Do not put copyrighted datasets directly into GitHub.
+
+Create:
+
+docs/DATASETS.md
+
+containing:
+
+dataset
+purpose
+license
+size
+labels
+limitations
+preprocessing
+
+---
+
+# 25. DATA PIPELINE
+
+Create a reproducible pipeline:
+
+Raw image
+↓
+validation
+↓
+preprocessing
+↓
+annotation
+↓
+feature extraction
+↓
+embedding generation
+↓
+database/vector store
+
+Version important datasets and model configurations.
+
+Never silently change preprocessing.
+
+---
+
+# 26. PRIVACY AND SECURITY
+
+Absolutely no:
+
+* local IP addresses
+* API keys
+* passwords
+* access tokens
+* private URLs
+* personal filesystem paths
+* personal email addresses
+
+inside source code.
+
+Use environment variables.
+
+Uploaded images should be treated as user data.
+
+Document:
+
+* where images are stored
+* retention policy
+* deletion behavior
+* whether images are sent to third-party AI services
+
+---
+
+# 27. MOBILE APP
+
+The mobile app should expose the intelligence rather than contain it.
+
+Screens:
+
+Home
+Wardrobe
+Inspiration
+Outfit Studio
+History
+Profile
+Garment Verification
+
+Do not hardcode AI results.
+
+For example, remove:
+
+"White shirt"
+"94%"
+"Tops"
+
+unless they are actual backend predictions.
+
+Use:
+
+API response → state → UI
+
+The mobile client should remain a presentation/client layer.
+
+---
+
+# 28. DEMO DATA
+
+A small amount of seed/demo data is allowed.
+
+But clearly label it as:
+
+Demo data
+
+Never present hardcoded demo predictions as AI output.
+
+The application should work with an empty account.
+
+A new user should receive:
+
+empty state
+instructions
+example action
+clear next step
+
+Do not overwhelm the user.
+
+---
+
+# 29. UI/UX PRINCIPLE
+
+The product should have:
+
+* light beige foundation
+* minimal premium aesthetic
+* Pinterest-inspired visual presentation
+* clean typography
+* generous spacing
+* image-first interfaces
+* minimal visual noise
+
+But do not spend most development time polishing UI.
+
+Technical intelligence comes first.
+
+---
+
+# 30. BEAUTY / HAIRCARE
+
+Do NOT implement these now.
+
+Future expansion only.
+
+The current technical scope is fashion.
+
+The architecture should remain extensible enough that future domains could eventually reuse:
+
+* user profile
+* visual perception
+* embeddings
+* recommendation
+* feedback
+* personalization
+
+But do not build beauty functionality now.
+
+---
+
+# 31. MODEST FASHION
+
+Do NOT implement modest-fashion requirements as a default feature.
+
+Only introduce modest-fashion constraints when a user explicitly requests or specifies them.
+
+Do not assume modesty preferences.
+
+---
+
+# 32. FUTURE RESEARCH FEATURES
+
+Do not implement these during the first stages.
+
+Potential future work:
+
+* advanced multimodal models
+* fashion-specific embedding models
+* learning-to-rank
+* personalized ranking
+* generative outfit visualization
+* virtual try-on
+* diffusion models
+* synthetic fashion data
+* multimodal agents
+* advanced fashion compatibility models
+
+These belong in the research/advanced roadmap.
+
+---
+
+# 33. FEATURES WE SHOULD NOT BUILD
+
+Do not spend significant engineering effort on:
+
+* generic fashion chatbot
+* social network
+* marketplace
+* influencer feed
+* generic AI caption generator
+* generic weather outfit generator
+* unnecessary gamification
+* unnecessary notifications
+* dozens of filters
+* arbitrary AI features without measurable value
+
+Every feature must answer:
+
+"What technical problem does this solve?"
+
+---
+
+# 34. GITHUB STRUCTURE
+
+Create:
+
+docs/
+ARCHITECTURE.md
+ARCHITECTURE_CURRENT.md
+DATASETS.md
+EVALUATION.md
+ML_MODELS.md
+API.md
+SECURITY.md
+DECISIONS.md
+ROADMAP.md
+
+experiments/
+README.md
+
+backend/
+mobile/
+
+README.md
+
+The README should eventually explain:
+
+Problem
+Solution
+Architecture
+Technical approach
+AI pipeline
+Dataset
+Evaluation
+Screenshots
+Demo
+Setup
+Limitations
+Future work
+
+---
+
+# 35. ARCHITECTURE DECISION RECORDS
+
+For significant decisions create ADRs.
+
+Example:
+
+docs/decisions/ADR-001-CLIP-BASELINE.md
+
+Document:
+
+Context
+Decision
+Alternatives
+Reason
+Trade-offs
+Consequences
+
+Use ADRs for decisions such as:
+
+* PostgreSQL
+* pgvector
+* embedding model
+* segmentation model
+* model serving
+* storage
+* API architecture
+
+This is important for demonstrating system-design maturity.
+
+---
+
+# 36. DEVELOPMENT PROCESS
+
+For every major feature:
+
+STEP 1
+Define problem.
+
+STEP 2
+Define input/output.
+
+STEP 3
+Define data.
+
+STEP 4
+Choose baseline.
+
+STEP 5
+Implement.
+
+STEP 6
+Test.
+
+STEP 7
+Evaluate.
+
+STEP 8
+Document.
+
+STEP 9
+Benchmark alternatives.
+
+STEP 10
+Only then optimize.
+
+Do not optimize before establishing a baseline.
+
+---
+
+# 37. AI MODEL PRINCIPLE
+
+Use pretrained models when appropriate.
+
+But do not blindly call APIs.
+
+For every AI component document:
+
+* model
+* model version
+* task
+* input
+* output
+* inference cost
+* latency
+* accuracy
+* limitations
+* alternatives
+
+If using an external API:
+
+create a provider abstraction.
+
+Do not make the entire system dependent on one provider.
+
+---
+
+# 38. FIRST MAJOR MILESTONE
+
+The first serious milestone is:
+
+## "Fashion Perception + Representation"
+
+The user should be able to:
+
+1. Upload an image.
+2. Backend processes it.
+3. Detect garment(s).
+4. Extract basic attributes.
+5. Extract dominant colors.
+6. Generate an embedding.
+7. Display predictions.
+8. Allow user correction.
+9. Save verified garment data.
+10. Search for visually similar garments.
+
+This is the first feature that should be considered technically meaningful.
+
+---
+
+# 39. SECOND MAJOR MILESTONE
+
+## "Inspiration → Wardrobe Retrieval"
+
+User:
+
+Uploads inspiration image.
+
+System:
+
+Understands image.
+
+Retrieves visually/fashion-relevant wardrobe items.
+
+Shows:
+
+* matched garment
+* similarity score
+* corresponding inspiration region
+* explanation
+
+---
+
+# 40. THIRD MAJOR MILESTONE
+
+## "Personalized Outfit Recommendation"
+
+System combines:
+
+Wardrobe
++
+User style profile
++
+Context
++
+Visual compatibility
++
+Historical feedback
+
+to produce ranked outfits.
+
+---
+
+# 41. FOURTH MAJOR MILESTONE
+
+## "Learning Personalization"
+
+System observes feedback.
+
+Updates user representation.
+
+Recommendation quality should measurably improve.
+
+This should have an experiment demonstrating the effect.
+
+---
+
+# 42. FINAL ADVANCED SYSTEM
+
+Eventually:
+
+USER
+↓
+WARDROBE
+↓
+MULTIMODAL FASHION UNDERSTANDING
+↓
+FASHION REPRESENTATION
+↓
+PERSONAL STYLE MODEL
+↓
+CONTEXT ENGINE
+↓
+CANDIDATE GENERATION
+↓
+RETRIEVAL
+↓
+RANKING
+↓
+EXPLANATION
+↓
+USER FEEDBACK
+↓
+PERSONALIZATION UPDATE
+↺
+
+This is the long-term Steezy architecture.
+
+---
+
+# 43. WHAT YOU MUST NOT DO
+
+Do not:
+
+* fabricate AI results
+* fabricate confidence
+* fabricate evaluation metrics
+* hardcode user-specific data
+* hardcode weather
+* hardcode recommendation explanations
+* hide API calls behind vague "AI" labels
+* claim a feature works if it is mocked
+* delete existing functionality without understanding it
+* rewrite the entire repository unnecessarily
+
+If a feature is currently simulated, explicitly label it:
+
+DEMO / MOCK / PLACEHOLDER
+
+---
+
+# 44. OUTPUT REQUIRED AFTER EACH IMPLEMENTATION
+
+After implementing each phase, provide:
+
+### 1. Files changed
+
+### 2. Architecture change
+
+### 3. Data flow
+
+### 4. API endpoints
+
+### 5. Models used
+
+### 6. Database changes
+
+### 7. Tests added
+
+### 8. How to run
+
+### 9. Example request
+
+### 10. Example response
+
+### 11. Known limitations
+
+### 12. What to reverse-engineer
+
+For "What to reverse-engineer", explain the concepts the developer should learn from the implementation.
+
+Example:
+
+* REST API lifecycle
+* dependency injection
+* service layer
+* repository pattern
+* image preprocessing
+* CLIP embeddings
+* cosine similarity
+* vector indexes
+* ranking functions
+
+---
+
+# 45. IMPORTANT: TEACH THROUGH IMPLEMENTATION
+
+The developer does not want to blindly copy AI-generated code.
+
+Therefore, whenever a major subsystem is created, produce:
+
+## Reverse Engineering Notes
+
+Explain:
+
+1. Why this component exists.
+2. What problem it solves.
+3. What enters it.
+4. What leaves it.
+5. How it interacts with other components.
+6. Why this implementation was chosen.
+7. What alternatives exist.
+8. What could fail.
+9. How it is tested.
+10. What should be learned to understand it deeply.
+
+---
+
+# 46. STARTING TASK
+
+DO NOT implement everything above.
+
+Start by auditing the existing repository.
+
+Produce:
+
+1. Current architecture diagram.
+2. Existing feature inventory.
+3. Existing API inventory.
+4. Existing AI pipeline.
+5. Existing data flow.
+6. Hardcoded/mock functionality.
+7. Security issues.
+8. Technical debt.
+9. What should be retained.
+10. What should be replaced.
+11. Phase 1 implementation plan.
+
+Then WAIT for approval before making major architectural changes.
+
+The goal is not to produce the maximum amount of code.
+
+The goal is to build the strongest technically defensible version of Steezy incrementally.
