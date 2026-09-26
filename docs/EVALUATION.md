@@ -25,6 +25,12 @@ These fixtures are contract fixtures, not a licensed fashion benchmark.
 Therefore no Recall@K, Precision@K, MRR, or latency metric is reported.
 Generated solid-color images cannot support an honest fashion-quality claim.
 
+The inspiration endpoint is evaluated as an integration contract: valid image
+bytes produce a query embedding in the indexed model space, scores/ranks are
+returned, invalid images are rejected, empty wardrobes return no results, and
+foreign users cannot observe another user's vectors. No semantic retrieval
+metrics are reported.
+
 ## Future benchmark gate
 
 Before selecting a semantic provider or claiming retrieval quality, add a

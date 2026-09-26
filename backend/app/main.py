@@ -11,6 +11,7 @@ from app.api.feedback import router as feedback_router
 from app.api.assets import router as assets_router
 from app.api.analysis import router as analysis_router
 from app.api.retrieval import router as retrieval_router
+from app.api.inspiration import router as inspiration_router
 from app.api.wardrobe import router as wardrobe_router
 from app.core.errors import ApiError
 from app.core.observability import correlation_id, valid_correlation_id
@@ -38,6 +39,7 @@ def create_app() -> FastAPI:
     application.include_router(assets_router)
     application.include_router(analysis_router)
     application.include_router(retrieval_router)
+    application.include_router(inspiration_router)
     application.add_middleware(CorrelationMiddleware)
 
     @application.exception_handler(RequestValidationError)

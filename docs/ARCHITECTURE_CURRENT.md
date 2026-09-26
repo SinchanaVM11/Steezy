@@ -27,6 +27,7 @@ FastAPI application
   └── /analysis/garments (synchronous in-process analysis contract)
       └── /analysis/garments/{job_id}/wardrobe-item (idempotent materialization)
           └── /wardrobe/search (user-scoped cosine similarity)
+              └── /inspiration/search (image → query embedding → retrieval)
           └── PATCH /wardrobe/items/{item_id}/verification
 
 API errors use a stable envelope:
@@ -189,6 +190,20 @@ exist.
 - Track the deterministic contract harness and its lack of benchmark metrics
   in `docs/EVALUATION.md`.
 
+### Phase 4.5 — Inspiration → Wardrobe Retrieval (complete)
+
+- Accept a user-scoped JPEG/PNG/WebP inspiration upload with the same size and
+  image validation boundary as asset ingestion.
+- Generate the query embedding with the current
+  `visual-rgb-feature-baseline` provider and require model, version, source,
+  and dimension compatibility with the user's indexed vectors.
+- Delegate cosine search, top-k, thresholding, ownership isolation, and
+  deterministic ordering to the existing retrieval service.
+- Return ranked wardrobe items, actual similarity scores, and embedding
+  provenance. This remains low-level visual similarity, not recommendations.
+- Add only a minimal Expo image-picker flow; no outfit generation or
+  personalization is included.
+
 ### Phase 5 — context-aware recommendations
 
 - Add context and user-profile services.
@@ -302,6 +317,11 @@ The current service is intentionally small enough to trace end to end:
      rejects dimension mismatches at indexing, and returns deterministic score
      ordering. Manual items without embeddings remain in the wardrobe but are
      absent from vector search.
+23. `InspirationRetrievalService` owns the image-query use case. It validates
+     content type, filename, and size, invokes the same embedding provider used
+     for wardrobe indexing, then delegates to `RetrievalService`. Provider
+     compatibility is checked before search; an empty wardrobe is a valid empty
+     result.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,

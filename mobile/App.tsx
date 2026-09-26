@@ -1,6 +1,8 @@
+import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
+import * as ImagePicker from "expo-image-picker";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { HealthStatus } from "./src/api/health";
@@ -8,6 +10,7 @@ import { API_BASE_URL, USER_ID } from "./src/config";
 import { useWardrobe } from "./src/wardrobe/useWardrobe";
 import { FEEDBACK_ACTIONS } from "./src/api/feedback";
 import { FeedbackSubmissionState, useFeedback } from "./src/feedback/useFeedback";
+import { InspirationResponse, searchInspiration } from "./src/api/inspiration";
 
 type RootStackParamList = {
   Home: undefined;
@@ -39,12 +42,56 @@ function HomeScreen() {
   );
 }
 
-function PlaceholderScreen({ title, description }: { title: string; description: string }) {
+function InspirationScreen() {
+  const [state, setState] = React.useState<
+    { status: "idle" } | { status: "loading" } | { status: "success"; data: InspirationResponse } | { status: "error"; message: string }
+  >({ status: "idle" });
+
+  async function chooseImage() {
+    const picked = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 1,
+      allowsEditing: false,
+    });
+    if (picked.canceled || !picked.assets[0]) return;
+    const asset = picked.assets[0];
+    setState({ status: "loading" });
+    try {
+      const data = await searchInspiration(
+        fetch,
+        API_BASE_URL,
+        USER_ID,
+        {
+          uri: asset.uri,
+          name: asset.fileName ?? "inspiration.jpg",
+          type: asset.mimeType ?? "image/jpeg",
+        },
+        { topK: 10, threshold: 0 },
+      );
+      setState({ status: "success", data });
+    } catch (error) {
+      setState({ status: "error", message: error instanceof Error ? error.message : "Search failed" });
+    }
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.eyebrow}>NEXT PHASE</Text>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.body}>{description}</Text>
+      <Text style={styles.eyebrow}>INSPIRATION</Text>
+      <Text style={styles.title}>Find similar pieces.</Text>
+      <Text style={styles.body}>Baseline low-level visual similarity only.</Text>
+      <Pressable onPress={() => void chooseImage()} disabled={state.status === "loading"}>
+        <Text style={styles.action}>{state.status === "loading" ? "Searching…" : "Choose inspiration image"}</Text>
+      </Pressable>
+      {state.status === "error" && <Text style={styles.feedbackError}>{state.message}</Text>}
+      {state.status === "success" && state.data.results.length === 0 && (
+        <Text style={styles.body}>No wardrobe items matched this image.</Text>
+      )}
+      {state.status === "success" &&
+        state.data.results.map((result) => (
+          <Text key={result.item.id} style={styles.body}>
+            #{result.rank} {result.item.category} · similarity {result.retrieval.score.toFixed(3)}
+          </Text>
+        ))}
     </View>
   );
 }
@@ -137,14 +184,7 @@ export default function App() {
       <Stack.Navigator>
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Wardrobe" component={WardrobeScreen} />
-        <Stack.Screen name="Inspiration">
-          {() => (
-            <PlaceholderScreen
-              title="Inspiration"
-              description="Image understanding and retrieval will be introduced after the perception baseline is evaluated."
-            />
-          )}
-        </Stack.Screen>
+        <Stack.Screen name="Inspiration" component={InspirationScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

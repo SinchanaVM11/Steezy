@@ -3,7 +3,12 @@ from uuid import UUID
 from app.core.errors import ApiError
 from app.models.vector import StoredEmbedding
 from app.repositories.vectors import VectorRepository
-from app.schemas.retrieval import SimilaritySearchResponse, SimilaritySearchResult, RetrievalMetadata
+from app.schemas.retrieval import (
+    RetrievalMetadata,
+    SimilaritySearchResponse,
+    SimilaritySearchResult,
+)
+from app.schemas.representation import VisualEmbedding
 from app.schemas.wardrobe import WardrobeItemResponse
 from app.repositories.wardrobe import WardrobeRepository
 
@@ -44,8 +49,42 @@ class RetrievalService:
         if not embedding:
             raise ApiError("invalid_embedding", "Embedding must not be empty.", 422)
         results = self._vectors.search(user_id, tuple(embedding), top_k, threshold)
+        return self._response(embedding, results, user_id)
+
+    def search_embedding(
+        self,
+        user_id: UUID,
+        embedding: VisualEmbedding,
+        top_k: int,
+        threshold: float,
+    ) -> SimilaritySearchResponse:
+        metadata = embedding.metadata
+        known = self._vectors.metadata_for_user(user_id)
+        if known and not any(
+            model == metadata.model_name
+            and version == metadata.model_version
+            and dimension == metadata.dimension
+            and source == metadata.source
+            for model, version, dimension, source in known
+        ):
+            raise ApiError(
+                "embedding_model_incompatible",
+                "Inspiration embedding is incompatible with the user's wardrobe embeddings.",
+                422,
+            )
+        results = self._vectors.search(
+            user_id,
+            tuple(embedding.values),
+            top_k,
+            threshold,
+            metadata.model_name,
+            metadata.model_version,
+        )
+        return self._response(embedding.values, results, user_id)
+
+    def _response(self, embedding, results, user_id):
         response = []
-        for stored, score in results:
+        for rank, (stored, score) in enumerate(results, start=1):
             item = self._wardrobe.get_for_user(stored.wardrobe_item_id, user_id)
             if item is None:
                 continue
@@ -60,6 +99,7 @@ class RetrievalService:
                         source=stored.source,
                         created_at=stored.created_at,
                     ),
+                    rank=rank,
                 )
             )
         return SimilaritySearchResponse(query_dimension=len(embedding), results=response)

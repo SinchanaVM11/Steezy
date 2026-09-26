@@ -31,6 +31,7 @@ class RetrievalMetadata(BaseModel):
 class SimilaritySearchResult(BaseModel):
     item: WardrobeItemResponse
     retrieval: RetrievalMetadata
+    rank: int
 
 
 class SimilaritySearchResponse(BaseModel):

@@ -104,3 +104,9 @@ materialized embeddings. Results are explicitly labeled low-level visual
 similarity; this is retrieval infrastructure, not recommendations or the
 Inspiration feature. See `docs/EVALUATION.md` for the reproducible contract
 harness and benchmark limitations.
+
+`POST /inspiration/search` accepts a validated multipart inspiration image,
+generates a query embedding with the same baseline provider, and returns
+ranked items from the requesting user's wardrobe with actual similarity
+scores. The Expo Inspiration screen demonstrates this flow with the SDK 57
+image picker. It is not recommendation ranking or semantic fashion reasoning.

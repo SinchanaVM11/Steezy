@@ -15,8 +15,16 @@ class VectorRepository(Protocol):
     def upsert(self, embedding: StoredEmbedding) -> StoredEmbedding: ...
 
     def search(
-        self, user_id: UUID, query: tuple[float, ...], top_k: int, threshold: float
+        self,
+        user_id: UUID,
+        query: tuple[float, ...],
+        top_k: int,
+        threshold: float,
+        model_name: str | None = None,
+        model_version: str | None = None,
     ) -> list[tuple[StoredEmbedding, float]]: ...
+
+    def metadata_for_user(self, user_id: UUID) -> list[tuple[str, str, int, str]]: ...
 
 
 def cosine_similarity(left: tuple[float, ...], right: tuple[float, ...]) -> float:
@@ -37,15 +45,27 @@ class InMemoryVectorRepository:
         self._embeddings[embedding.wardrobe_item_id] = embedding
         return embedding
 
-    def search(self, user_id, query, top_k, threshold):
+    def search(self, user_id, query, top_k, threshold, model_name=None, model_version=None):
         results = []
         for embedding in self._embeddings.values():
-            if embedding.user_id != user_id or embedding.dimension != len(query):
+            if (
+                embedding.user_id != user_id
+                or embedding.dimension != len(query)
+                or (model_name and embedding.model_name != model_name)
+                or (model_version and embedding.model_version != model_version)
+            ):
                 continue
             score = cosine_similarity(embedding.values, query)
             if score >= threshold:
                 results.append((embedding, score))
         return sorted(results, key=lambda result: (-result[1], str(result[0].wardrobe_item_id)))[:top_k]
+
+    def metadata_for_user(self, user_id):
+        return [
+            (embedding.model_name, embedding.model_version, embedding.dimension, embedding.source)
+            for embedding in self._embeddings.values()
+            if embedding.user_id == user_id
+        ]
 
 
 class SQLiteVectorRepository:
@@ -85,7 +105,7 @@ class SQLiteVectorRepository:
             raise ApiError("persistence_error", "Vector persistence failed.", 503) from error
         return embedding
 
-    def search(self, user_id, query, top_k, threshold):
+    def search(self, user_id, query, top_k, threshold, model_name=None, model_version=None):
         with sqlite3.connect(self._database_path) as connection:
             rows = connection.execute(
                 """
@@ -108,9 +128,23 @@ class SQLiteVectorRepository:
                 source=str(row[6]),
                 created_at=datetime.fromisoformat(str(row[7])),
             )
-            if embedding.dimension != len(query):
+            if (
+                embedding.dimension != len(query)
+                or (model_name and embedding.model_name != model_name)
+                or (model_version and embedding.model_version != model_version)
+            ):
                 continue
             score = cosine_similarity(embedding.values, query)
             if score >= threshold:
                 results.append((embedding, score))
         return sorted(results, key=lambda result: (-result[1], str(result[0].wardrobe_item_id)))[:top_k]
+
+    def metadata_for_user(self, user_id):
+        with sqlite3.connect(self._database_path) as connection:
+            return connection.execute(
+                """
+                SELECT DISTINCT model_name, model_version, dimension, source
+                FROM wardrobe_embeddings WHERE user_id = ?
+                """,
+                (str(user_id),),
+            ).fetchall()
