@@ -24,6 +24,7 @@ FastAPI application
       └── deterministic metadata analyzer (no image/model/network access)
   └── /feedback (validated, append-only learning signals)
   └── /assets/images (validated bytes → local asset reference)
+  └── /analysis/garments (synchronous in-process analysis contract)
 
 API errors use a stable envelope:
 
@@ -254,6 +255,11 @@ The current service is intentionally small enough to trace end to end:
      provide filesystem isolation, while the returned `storage_key` is an
      internal reference rather than a public path. Future image analysis can
      consume this reference through a separate provider boundary.
+17. Garment analysis currently has an explicit job/result shape but executes
+     synchronously in-process. It verifies the asset owner, reads stored bytes,
+     and sends only filename-derived metadata to the deterministic analyzer.
+     `completed` and `failed` are result statuses, not durable queue states;
+     missing assets/bytes fail with structured errors and no partial result.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,

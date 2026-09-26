@@ -21,6 +21,10 @@ class AssetStorage(Protocol):
 
     async def delete(self, user_id: UUID, asset_id: UUID) -> None: ...
 
+    async def get(self, asset_id: UUID) -> StoredAsset | None: ...
+
+    async def read(self, asset: StoredAsset) -> bytes: ...
+
 
 def validate_filename(filename: str) -> str:
     name = Path(filename).name
@@ -61,10 +65,20 @@ class InMemoryAssetStorage:
     async def delete(self, user_id, asset_id):
         self.assets.pop((user_id, asset_id), None)
 
+    async def get(self, asset_id):
+        return next((asset for asset, _ in self.assets.values() if asset.asset_id == asset_id), None)
+
+    async def read(self, asset):
+        stored = self.assets.get((asset.user_id, asset.asset_id))
+        if stored is None:
+            raise ApiError("asset_not_found", "Asset bytes were not found.", 404)
+        return stored[1]
+
 
 class LocalFileAssetStorage:
     def __init__(self, root: str) -> None:
         self._root = Path(root).resolve()
+        self._assets: dict[UUID, StoredAsset] = {}
 
     async def save(self, user_id, filename, content_type, read):
         filename = validate_filename(filename)
@@ -83,7 +97,9 @@ class LocalFileAssetStorage:
             destination.write_bytes(content)
         except OSError as error:
             raise ApiError("storage_error", "Asset storage failed.", 503) from error
-        return StoredAsset(asset_id, user_id, content_type, len(content), filename, storage_key)
+        asset = StoredAsset(asset_id, user_id, content_type, len(content), filename, storage_key)
+        self._assets[asset_id] = asset
+        return asset
 
     async def delete(self, user_id, asset_id):
         destination = (self._root / str(user_id) / f"{asset_id}.bin").resolve()
@@ -93,3 +109,15 @@ class LocalFileAssetStorage:
             destination.unlink(missing_ok=True)
         except OSError as error:
             raise ApiError("storage_error", "Asset cleanup failed.", 503) from error
+
+    async def get(self, asset_id):
+        return self._assets.get(asset_id)
+
+    async def read(self, asset):
+        destination = (self._root / asset.storage_key).resolve()
+        if self._root not in destination.parents or not destination.is_file():
+            raise ApiError("asset_not_found", "Asset bytes were not found.", 404)
+        try:
+            return destination.read_bytes()
+        except OSError as error:
+            raise ApiError("storage_error", "Asset read failed.", 503) from error

@@ -56,6 +56,11 @@ Image ingestion currently stores validated JPEG, PNG, or WebP bytes under
 `.data/assets` outside SQLite and returns a generated asset reference. It does
 not inspect images or invoke a model.
 
+`POST /analysis/garments` is a synchronous, in-process deterministic baseline
+that reads a user-owned stored asset and derives metadata from its filename
+only. It is not a durable job queue, computer-vision model, or claim of image
+understanding.
+
 Run the backend checks with:
 
 ```bash
