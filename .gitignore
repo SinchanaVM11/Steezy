@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Build and tool output
+dist/
+build/
+*.egg-info/
+
+# Node / Expo
+node_modules/
+.expo/
+.expo-shared/
+
+# OS/editor files
+.DS_Store
+.idea/
+.vscode/
