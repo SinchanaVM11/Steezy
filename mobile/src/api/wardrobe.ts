@@ -10,6 +10,29 @@ export type WardrobeItem = {
   updated_at: string;
 };
 
+export type ApiError = {
+  code: string;
+  message: string;
+  correlation_id: string;
+  details: unknown;
+};
+
+export function apiErrorMessage(payload: unknown, fallback: string): string {
+  if (typeof payload !== "object" || payload === null || !("error" in payload)) {
+    return fallback;
+  }
+  const error = payload.error;
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+  return fallback;
+}
+
 function isWardrobeItem(value: unknown): value is WardrobeItem {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -43,7 +66,15 @@ export async function fetchWardrobeItems(
   const response = await fetcher(wardrobeItemsUrl(baseUrl, userId));
 
   if (!response.ok) {
-    throw new Error(`Wardrobe request failed with status ${response.status}`);
+    let payload: unknown = null;
+    try {
+      payload = await response.json();
+    } catch {
+      // Preserve the transport status when no JSON envelope is available.
+    }
+    throw new Error(
+      apiErrorMessage(payload, `Wardrobe request failed with status ${response.status}`),
+    );
   }
 
   const payload: unknown = await response.json();

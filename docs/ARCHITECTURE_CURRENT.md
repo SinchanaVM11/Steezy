@@ -24,6 +24,19 @@ FastAPI application
       └── deterministic metadata analyzer (no image/model/network access)
   └── /feedback (validated, append-only learning signals)
 
+API errors use a stable envelope:
+
+```json
+{
+  "error": {
+    "code": "validation_error",
+    "message": "Request validation failed.",
+    "correlation_id": "request-uuid",
+    "details": []
+  }
+}
+```
+
 configuration
   └── environment-backed settings (no secrets committed)
 
@@ -127,6 +140,14 @@ exist.
 - Treat malformed and non-success responses as visible errors; do not claim
   ranking or model learning.
 
+### Phase 2.9 — API observability and error contracts (current)
+
+- Return one JSON error envelope for validation, missing items, ownership
+  failures, and persistence failures.
+- Attach a safe UUID correlation ID to every response as `X-Request-ID`.
+- Parse server messages on mobile while preserving existing loading/success/error
+  UI states.
+
 ### Phase 3 — fashion perception baseline
 
 - Add image validation and a replaceable perception provider.
@@ -213,6 +234,9 @@ The current service is intentionally small enough to trace end to end:
      set prevents duplicate submissions for the same item while allowing
      different items to submit independently. The response is only a stored
      acknowledgement; it does not update recommendations or a model.
+14. Error handlers centralize diagnostics without exposing database exception
+     text. Clients can show the stable message, while `X-Request-ID` connects a
+     report to server logs in a future logging sink.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,

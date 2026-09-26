@@ -18,6 +18,19 @@ export type FeedbackResponse = {
   created_at: string;
 };
 
+function apiErrorMessage(payload: unknown, fallback: string): string {
+  if (typeof payload !== "object" || payload === null || !("error" in payload)) {
+    return fallback;
+  }
+  const error = payload.error;
+  return typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+    ? error.message
+    : fallback;
+}
+
 export function feedbackUrl(baseUrl: string): string {
   return `${baseUrl.replace(/\/+$/, "")}/feedback`;
 }
@@ -61,7 +74,15 @@ export async function submitFeedback(
   });
 
   if (!response.ok) {
-    throw new Error(`Feedback request failed with status ${response.status}`);
+    let payload: unknown = null;
+    try {
+      payload = await response.json();
+    } catch {
+      // Preserve the transport status when no JSON envelope is available.
+    }
+    throw new Error(
+      apiErrorMessage(payload, `Feedback request failed with status ${response.status}`),
+    );
   }
 
   const payload: unknown = await response.json();

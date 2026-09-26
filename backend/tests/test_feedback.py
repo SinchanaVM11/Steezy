@@ -104,5 +104,5 @@ class _WardrobeRepositoryStub:
         self.item_id = item_id
         self.user_id = user_id
 
-    def get_for_user(self, item_id, user_id):
-        return object() if item_id == self.item_id and user_id == self.user_id else None
+    def get(self, item_id):
+        return type("Item", (), {"user_id": self.user_id})() if item_id == self.item_id else None

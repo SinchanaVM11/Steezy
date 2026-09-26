@@ -29,10 +29,22 @@ describe("feedback API client", () => {
   });
 
   it("rejects HTTP failures and malformed responses", async () => {
-    const failed = jest.fn(async () => new Response(null, { status: 404 }));
+    const failed = jest.fn(async () =>
+      new Response(
+        JSON.stringify({
+          error: {
+            code: "item_not_owned",
+            message: "wardrobe item is not owned by user",
+            correlation_id: "request-1",
+            details: null,
+          },
+        }),
+        { status: 404 },
+      ),
+    );
     await expect(
       submitFeedback(failed, "http://localhost:8000", "user-1", "item-1", "like"),
-    ).rejects.toThrow("status 404");
+    ).rejects.toThrow("not owned");
 
     const malformed = jest.fn(async () => new Response(JSON.stringify({ id: "missing" }), { status: 201 }));
     await expect(

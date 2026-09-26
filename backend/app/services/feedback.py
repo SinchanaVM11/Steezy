@@ -8,7 +8,11 @@ from app.schemas.feedback import FeedbackCreate
 
 
 class WardrobeItemNotOwnedError(ValueError):
-    """Raised when feedback references another user's or missing item."""
+    """Raised when feedback references another user's item."""
+
+
+class WardrobeItemNotFoundError(ValueError):
+    """Raised when feedback references a missing item."""
 
 
 class FeedbackService:
@@ -21,9 +25,10 @@ class FeedbackService:
         self._wardrobe_repository = wardrobe_repository
 
     def record(self, data: FeedbackCreate) -> Feedback:
-        if self._wardrobe_repository.get_for_user(
-            data.wardrobe_item_id, data.user_id
-        ) is None:
+        item = self._wardrobe_repository.get(data.wardrobe_item_id)
+        if item is None:
+            raise WardrobeItemNotFoundError("wardrobe item was not found")
+        if item.user_id != data.user_id:
             raise WardrobeItemNotOwnedError("wardrobe item is not owned by user")
         feedback = Feedback(
             id=uuid4(),

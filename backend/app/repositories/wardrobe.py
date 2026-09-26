@@ -7,10 +7,13 @@ from uuid import UUID
 
 from app.models.wardrobe import WardrobeItem
 from app.db.sqlite import initialize_database
+from app.core.errors import ApiError
 
 
 class WardrobeRepository(Protocol):
     def add(self, item: WardrobeItem) -> WardrobeItem: ...
+
+    def get(self, item_id: UUID) -> WardrobeItem | None: ...
 
     def get_for_user(self, item_id: UUID, user_id: UUID) -> WardrobeItem | None: ...
 
@@ -26,6 +29,9 @@ class InMemoryWardrobeRepository:
     def add(self, item: WardrobeItem) -> WardrobeItem:
         self._items[item.id] = item
         return item
+
+    def get(self, item_id: UUID) -> WardrobeItem | None:
+        return self._items.get(item_id)
 
     def list_for_user(self, user_id: UUID) -> list[WardrobeItem]:
         return [item for item in self._items.values() if item.user_id == user_id]
@@ -43,15 +49,16 @@ class SQLiteWardrobeRepository:
         initialize_database(database_path)
 
     def add(self, item: WardrobeItem) -> WardrobeItem:
-        with sqlite3.connect(self._database_path) as connection:
-            connection.execute(
+        try:
+            with sqlite3.connect(self._database_path) as connection:
+                connection.execute(
                 """
                 INSERT INTO wardrobe_items
                 (id, user_id, category, subcategory, colors, source,
                  verification_status, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (
+                    (
                     str(item.id),
                     str(item.user_id),
                     item.category,
@@ -61,8 +68,10 @@ class SQLiteWardrobeRepository:
                     item.verification_status,
                     item.created_at.isoformat(),
                     item.updated_at.isoformat(),
-                ),
-            )
+                    ),
+                )
+        except sqlite3.Error as error:
+            raise ApiError("persistence_error", "Wardrobe persistence failed.", 503) from error
         return item
 
     def list_for_user(self, user_id: UUID) -> list[WardrobeItem]:
@@ -78,6 +87,19 @@ class SQLiteWardrobeRepository:
                 (str(user_id),),
             ).fetchall()
         return [self._from_row(row) for row in rows]
+
+    def get(self, item_id: UUID) -> WardrobeItem | None:
+        with sqlite3.connect(self._database_path) as connection:
+            row = connection.execute(
+                """
+                SELECT id, user_id, category, subcategory, colors, source,
+                       verification_status, created_at, updated_at
+                FROM wardrobe_items
+                WHERE id = ?
+                """,
+                (str(item_id),),
+            ).fetchone()
+        return self._from_row(row) if row is not None else None
 
     def get_for_user(self, item_id: UUID, user_id: UUID) -> WardrobeItem | None:
         with sqlite3.connect(self._database_path) as connection:

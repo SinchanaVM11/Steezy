@@ -35,10 +35,22 @@ describe("wardrobe API client", () => {
   });
 
   it("rejects an API error response", async () => {
-    const fetcher = jest.fn(async () => new Response(null, { status: 503 }));
-
-    await expect(fetchWardrobeItems(fetcher, "http://localhost:8000", "user-1")).rejects.toThrow(
-      "status 503",
+    const fetcher = jest.fn(async () =>
+      new Response(
+        JSON.stringify({
+          error: {
+            code: "persistence_error",
+            message: "Persistence operation failed.",
+            correlation_id: "request-1",
+            details: null,
+          },
+        }),
+        { status: 503 },
+      ),
     );
+
+    await expect(
+      fetchWardrobeItems(fetcher, "http://localhost:8000", "user-1"),
+    ).rejects.toThrow("Persistence operation failed.");
   });
 });
