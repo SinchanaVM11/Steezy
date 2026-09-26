@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     api_host: str = "127.0.0.1"
     api_port: int = 8000
     log_level: str = "INFO"
+    database_path: str = ".data/steezy.sqlite3"
 
     model_config = SettingsConfigDict(
         env_file=".env",

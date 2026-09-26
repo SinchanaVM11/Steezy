@@ -20,7 +20,7 @@ The foundation adds these executable boundaries:
 ```text
 FastAPI application
   └── GET /health
-  └── /wardrobe/items (validated contract, in-memory development adapter)
+  └── /wardrobe/items (validated contract, SQLite-backed local persistence)
 
 configuration
   └── environment-backed settings (no secrets committed)
@@ -82,11 +82,13 @@ exist.
 - Keep Wardrobe and Inspiration as clearly labeled placeholders until their
   backend contracts exist.
 
-### Phase 2 — wardrobe contract (current)
+### Phase 2 — wardrobe contract and local persistence (current)
 
 - Define validated wardrobe request/response schemas and domain models.
-- Introduce a repository protocol and an in-memory development adapter.
-- Expose user-scoped create/list endpoints without claiming durable persistence.
+- Introduce a repository protocol with in-memory and SQLite adapters.
+- Expose user-scoped create/list endpoints backed by a local SQLite file.
+- Initialize the small schema at repository startup and configure its path with
+  `STEEZY_DATABASE_PATH`.
 - Add explicit image metadata and privacy/deletion rules.
 - Add API contract tests before implementing mobile screens.
 
@@ -150,12 +152,16 @@ The current service is intentionally small enough to trace end to end:
 6. `mobile/src/api/health.tsx` normalizes the configured base URL, calls the
    backend health endpoint, and rejects transport or response-contract errors.
 7. The wardrobe route depends on a service, the service depends on a repository
-   protocol, and the current adapter stores items only for the lifetime of the
-   process. This allows PostgreSQL to replace the adapter without changing the
-   HTTP contract.
+   protocol, and the default adapter is SQLite-backed. The in-memory adapter
+   remains available for isolated tests and explicit ephemeral use. This allows
+   PostgreSQL to replace SQLite without changing the HTTP contract.
 8. Wardrobe items intentionally contain user-entered structural fields only.
    AI predictions, confidence, image metadata, and embeddings belong to later
    slices and must not be implied by this API.
+9. SQLite initialization creates one wardrobe table and a user-id index. It is
+   a local development persistence step, not a production migration system.
+   Rows are serialized with standard-library SQLite and JSON; the repository
+   reconstructs domain objects before returning them to the service.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,

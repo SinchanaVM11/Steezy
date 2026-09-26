@@ -2,12 +2,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
 
-from app.repositories.wardrobe import InMemoryWardrobeRepository
+from app.core.config import get_settings
+from app.repositories.wardrobe import SQLiteWardrobeRepository
 from app.schemas.wardrobe import WardrobeItemCreate, WardrobeItemResponse
 from app.services.wardrobe import WardrobeService
 
 router = APIRouter(prefix="/wardrobe/items", tags=["wardrobe"])
-repository = InMemoryWardrobeRepository()
+repository = SQLiteWardrobeRepository(get_settings().database_path)
 
 
 def get_wardrobe_service() -> WardrobeService:
