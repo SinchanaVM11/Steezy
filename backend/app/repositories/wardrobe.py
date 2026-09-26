@@ -1,7 +1,8 @@
 import json
 import sqlite3
 from collections.abc import Iterable
-from datetime import datetime
+from dataclasses import replace
+from datetime import datetime, timezone
 from typing import Protocol
 from uuid import UUID
 
@@ -22,6 +23,10 @@ class WardrobeRepository(Protocol):
     ) -> WardrobeItem | None: ...
 
     def list_for_user(self, user_id: UUID) -> Iterable[WardrobeItem]: ...
+
+    def update_verification(
+        self, item_id: UUID, user_id: UUID, attributes: dict[str, str]
+    ) -> WardrobeItem | None: ...
 
 
 class InMemoryWardrobeRepository:
@@ -56,6 +61,19 @@ class InMemoryWardrobeRepository:
             None,
         )
 
+    def update_verification(self, item_id, user_id, attributes):
+        item = self.get_for_user(item_id, user_id)
+        if item is None:
+            return None
+        updated = replace(
+            item,
+            verification_status="verified",
+            verified_attributes=attributes,
+            updated_at=datetime.now(timezone.utc),
+        )
+        self._items[item_id] = updated
+        return updated
+
 
 class SQLiteWardrobeRepository:
     """Durable local adapter; PostgreSQL can replace it behind the same protocol."""
@@ -72,8 +90,9 @@ class SQLiteWardrobeRepository:
                 INSERT INTO wardrobe_items
                 (id, user_id, category, subcategory, colors, source,
                  verification_status, asset_id, analysis_job_id, analysis_provider,
-                 analysis_unknown_attributes, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 analysis_unknown_attributes, created_at, updated_at,
+                 representation, verified_attributes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                     (
                     str(item.id),
@@ -89,6 +108,8 @@ class SQLiteWardrobeRepository:
                     json.dumps(item.analysis_unknown_attributes),
                     item.created_at.isoformat(),
                     item.updated_at.isoformat(),
+                    json.dumps(item.representation) if item.representation else None,
+                    json.dumps(item.verified_attributes or {}),
                     ),
                 )
         except sqlite3.Error as error:
@@ -101,7 +122,8 @@ class SQLiteWardrobeRepository:
                 """
                 SELECT id, user_id, category, subcategory, colors, source,
                        verification_status, asset_id, analysis_job_id, analysis_provider,
-                       analysis_unknown_attributes, created_at, updated_at
+                       analysis_unknown_attributes, created_at, updated_at,
+                       representation, verified_attributes
                 FROM wardrobe_items
                 WHERE user_id = ?
                 ORDER BY created_at, id
@@ -116,7 +138,8 @@ class SQLiteWardrobeRepository:
                 """
                 SELECT id, user_id, category, subcategory, colors, source,
                        verification_status, asset_id, analysis_job_id, analysis_provider,
-                       analysis_unknown_attributes, created_at, updated_at
+                       analysis_unknown_attributes, created_at, updated_at,
+                       representation, verified_attributes
                 FROM wardrobe_items
                 WHERE id = ?
                 """,
@@ -130,7 +153,8 @@ class SQLiteWardrobeRepository:
                 """
                 SELECT id, user_id, category, subcategory, colors, source,
                        verification_status, asset_id, analysis_job_id, analysis_provider,
-                       analysis_unknown_attributes, created_at, updated_at
+                       analysis_unknown_attributes, created_at, updated_at,
+                       representation, verified_attributes
                 FROM wardrobe_items
                 WHERE id = ? AND user_id = ?
                 """,
@@ -146,13 +170,35 @@ class SQLiteWardrobeRepository:
                 """
                 SELECT id, user_id, category, subcategory, colors, source,
                        verification_status, asset_id, analysis_job_id, analysis_provider,
-                       analysis_unknown_attributes, created_at, updated_at
+                       analysis_unknown_attributes, created_at, updated_at,
+                       representation, verified_attributes
                 FROM wardrobe_items
                 WHERE analysis_job_id = ? AND user_id = ?
                 """,
                 (str(analysis_job_id), str(user_id)),
             ).fetchone()
         return self._from_row(row) if row is not None else None
+
+    def update_verification(self, item_id, user_id, attributes):
+        with sqlite3.connect(self._database_path) as connection:
+            cursor = connection.execute(
+                """
+                UPDATE wardrobe_items
+                SET verification_status = 'verified',
+                    verified_attributes = ?,
+                    updated_at = ?
+                WHERE id = ? AND user_id = ?
+                """,
+                (
+                    json.dumps(attributes),
+                    datetime.now(timezone.utc).isoformat(),
+                    str(item_id),
+                    str(user_id),
+                ),
+            )
+            if cursor.rowcount == 0:
+                return None
+        return self.get_for_user(item_id, user_id)
 
     @staticmethod
     def _from_row(row: tuple[object, ...]) -> WardrobeItem:
@@ -170,6 +216,8 @@ class SQLiteWardrobeRepository:
             analysis_unknown_attributes,
             created_at,
             updated_at,
+            representation,
+            verified_attributes,
         ) = row
         return WardrobeItem(
             id=UUID(str(item_id)),
@@ -185,4 +233,6 @@ class SQLiteWardrobeRepository:
             analysis_unknown_attributes=tuple(json.loads(str(analysis_unknown_attributes))),
             created_at=datetime.fromisoformat(str(created_at)),
             updated_at=datetime.fromisoformat(str(updated_at)),
+            representation=json.loads(str(representation)) if representation else None,
+            verified_attributes=json.loads(str(verified_attributes or "{}")),
         )

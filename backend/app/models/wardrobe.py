@@ -18,3 +18,5 @@ class WardrobeItem:
     analysis_unknown_attributes: tuple[str, ...]
     created_at: datetime
     updated_at: datetime
+    representation: dict | None = None
+    verified_attributes: dict[str, str] | None = None

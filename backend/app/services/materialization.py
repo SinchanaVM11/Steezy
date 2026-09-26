@@ -47,6 +47,10 @@ class MaterializationService:
             analysis_unknown_attributes=tuple(job.result.unknown_attributes),
             created_at=now,
             updated_at=now,
+            representation=job.result.representation.model_dump()
+            if job.result.representation is not None
+            else None,
+            verified_attributes={},
         )
         try:
             return self._wardrobe_repository.add(item)

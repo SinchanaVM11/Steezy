@@ -92,3 +92,10 @@ with `POST /analysis/garments/{job_id}/wardrobe-item`; the resulting wardrobe
 item retains its asset reference, provider, unknown attributes, and analysis
 job ID for idempotent retries. Analysis jobs are not durable across process
 restarts, and no confidence or computer-vision inference is claimed.
+
+The perception baseline now accepts valid stored images, performs RGB thumbnail
+preprocessing, extracts a conservative dominant color, and returns a
+structured representation with provenance and a deterministic placeholder
+embedding. User corrections are kept separate via
+`PATCH /wardrobe/items/{item_id}/verification`. Export the complete contract
+with `python backend/scripts/export_openapi.py --output /tmp/steezy-openapi.json`.

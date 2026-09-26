@@ -26,6 +26,7 @@ FastAPI application
   └── /assets/images (validated bytes → local asset reference)
   └── /analysis/garments (synchronous in-process analysis contract)
       └── /analysis/garments/{job_id}/wardrobe-item (idempotent materialization)
+          └── PATCH /wardrobe/items/{item_id}/verification
 
 API errors use a stable envelope:
 
@@ -158,13 +159,19 @@ exist.
 - Parse server messages on mobile while preserving existing loading/success/error
   UI states.
 
-### Phase 3 — fashion perception baseline
+### Phase 3 — fashion perception and representation baseline (complete)
 
-- Add image validation and a replaceable perception provider.
-- Keep predicted values, confidence, model name, and version separate from
-  user-verified attributes.
-- Evaluate category and color baselines on documented data; never fabricate
-  confidence or metrics.
+- Validate and preprocess stored image bytes with Pillow.
+- Run a replaceable perception boundary that extracts a conservative category
+  baseline and dominant RGB-nearest color.
+- Generate a deterministic, normalized byte embedding through an
+  `EmbeddingService` protocol; this is a seam, not a learned visual model.
+- Persist structured predictions, provenance, embedding metadata, asset
+  reference, and user-verified attributes separately on wardrobe items.
+- Expose an explicit verification endpoint; verification never overwrites AI
+  predictions.
+- CLIP classification, production garment detection, and vector retrieval are
+  intentionally deferred.
 
 ### Phase 4 — representation and retrieval
 
@@ -266,6 +273,16 @@ The current service is intentionally small enough to trace end to end:
      stored with the wardrobe item as the idempotency key; repeated requests
      return the existing item. Asset reference, provider, and unknown attributes
      are retained without adding confidence or inventing predictions.
+19. The perception baseline converts stored images to RGB thumbnails before
+     extracting one dominant color by nearest reference color. Category uses the
+     filename only as an explicitly labeled baseline signal; unsupported
+     categories and attributes are `unknown` with null confidence. The
+     deterministic byte embedding is normalized and records model name, version,
+     dimension, and source, but must not be treated as semantic similarity.
+20. `FashionItemRepresentation` stores predicted values and provenance in
+     `representation`; `verified_attributes` and `verification_status` are
+     separate user-owned state. `PATCH /wardrobe/items/{item_id}/verification`
+     is the only current verification write path.
 
 The next implementation should preserve this separation while adding one
 vertical slice at a time: define input/output, choose a baseline, implement,

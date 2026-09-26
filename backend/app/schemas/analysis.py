@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from app.schemas.feedback import FeedbackAction
+from app.schemas.representation import FashionItemRepresentation
 
 
 class AnalysisStatus(str, Enum):
@@ -20,6 +21,7 @@ class AnalysisResult(BaseModel):
     colors: list[str]
     unknown_attributes: list[str]
     provider: str
+    representation: FashionItemRepresentation | None = None
 
 
 class AnalysisJobResponse(BaseModel):

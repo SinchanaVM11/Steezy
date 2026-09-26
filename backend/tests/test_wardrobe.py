@@ -63,3 +63,22 @@ def test_list_wardrobe_items_is_scoped_to_user() -> None:
 
     assert len(items) == 1
     assert items[0]["category"] == "trousers"
+
+
+def test_user_can_verify_item_attributes_without_overwriting_prediction_data() -> None:
+    user_id = uuid4()
+    created = client.post(
+        "/wardrobe/items",
+        json={"user_id": str(user_id), "category": "shirt"},
+    ).json()
+
+    response = client.patch(
+        f"/wardrobe/items/{created['id']}/verification",
+        headers={"X-User-ID": str(user_id)},
+        json={"attributes": {"fit": "relaxed"}},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["verification_status"] == "verified"
+    assert response.json()["verified_attributes"] == {"fit": "relaxed"}
+    assert response.json()["representation"] is None

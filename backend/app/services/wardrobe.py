@@ -9,6 +9,7 @@ from app.ai.garment_analyzer import (
 from app.models.wardrobe import WardrobeItem
 from app.repositories.wardrobe import WardrobeRepository
 from app.schemas.wardrobe import WardrobeItemCreate
+from app.core.errors import ApiError
 
 
 class WardrobeService:
@@ -39,8 +40,18 @@ class WardrobeService:
             analysis_unknown_attributes=(),
             created_at=now,
             updated_at=now,
+            representation=None,
+            verified_attributes={},
         )
         return self._repository.add(item)
 
     def list_items(self, user_id: UUID) -> list[WardrobeItem]:
         return list(self._repository.list_for_user(user_id))
+
+    def verify_item(
+        self, item_id: UUID, user_id: UUID, attributes: dict[str, str]
+    ) -> WardrobeItem:
+        item = self._repository.update_verification(item_id, user_id, attributes)
+        if item is None:
+            raise ApiError("item_not_found", "Wardrobe item was not found.", 404)
+        return item

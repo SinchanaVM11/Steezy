@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS wardrobe_items (
     analysis_unknown_attributes TEXT NOT NULL DEFAULT '[]',
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
+    ,representation TEXT
+    ,verified_attributes TEXT NOT NULL DEFAULT '{}'
 );
 
 CREATE INDEX IF NOT EXISTS idx_wardrobe_items_user_id
@@ -50,6 +52,8 @@ def initialize_database(database_path: str) -> None:
             "analysis_job_id": "TEXT",
             "analysis_provider": "TEXT",
             "analysis_unknown_attributes": "TEXT NOT NULL DEFAULT '[]'",
+            "representation": "TEXT",
+            "verified_attributes": "TEXT NOT NULL DEFAULT '{}'",
         }
         for name, definition in additions.items():
             if name not in columns:

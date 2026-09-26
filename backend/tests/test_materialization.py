@@ -1,4 +1,6 @@
 from uuid import uuid4
+from io import BytesIO
+from PIL import Image
 
 import pytest
 
@@ -15,6 +17,12 @@ from app.schemas.analysis import AnalysisJobResponse, AnalysisResult, AnalysisSt
 
 async def read_pixels(_: int) -> bytes:
     return b"pixels"
+
+
+def png_bytes() -> bytes:
+    output = BytesIO()
+    Image.new("RGB", (2, 2), (20, 40, 180)).save(output, format="PNG")
+    return output.getvalue()
 
 
 def completed_job(user_id, status=AnalysisStatus.COMPLETED):
@@ -127,7 +135,7 @@ def test_endpoint_pipeline_uploads_analyzes_and_materializes(tmp_path) -> None:
         uploaded = client.post(
             "/assets/images",
             headers={"X-User-ID": str(user_id)},
-            files={"file": ("shirt.png", b"pixels", "image/png")},
+            files={"file": ("shirt.png", png_bytes(), "image/png")},
         )
         analyzed = client.post(
             "/analysis/garments",

@@ -1,6 +1,7 @@
 from typing import Protocol
 
 from pydantic import BaseModel, Field, field_validator
+from app.schemas.representation import FashionItemRepresentation
 
 
 class GarmentAnalysisInput(BaseModel):
@@ -20,6 +21,7 @@ class GarmentAnalysisResult(BaseModel):
     colors: list[str]
     unknown_attributes: list[str]
     provider: str
+    representation: FashionItemRepresentation | None = None
 
 
 class GarmentAnalyzer(Protocol):

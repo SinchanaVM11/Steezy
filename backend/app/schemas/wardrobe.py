@@ -12,6 +12,10 @@ class WardrobeItemCreate(BaseModel):
     source: str = Field(default="user", pattern="^(user|imported)$")
 
 
+class WardrobeVerification(BaseModel):
+    attributes: dict[str, str] = Field(default_factory=dict, max_length=32)
+
+
 class WardrobeItemResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -28,3 +32,5 @@ class WardrobeItemResponse(BaseModel):
     analysis_unknown_attributes: list[str]
     created_at: datetime
     updated_at: datetime
+    representation: dict | None = None
+    verified_attributes: dict[str, str] = Field(default_factory=dict)

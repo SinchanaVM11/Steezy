@@ -1,11 +1,11 @@
-from pathlib import Path
 from uuid import UUID, uuid4
 
 from app.ai.garment_analyzer import (
-    DeterministicMetadataAnalyzer,
-    GarmentAnalysisInput,
     GarmentAnalyzer,
+    GarmentAnalysisInput,
+    GarmentAnalysisResult,
 )
+from app.ai.perception import DeterministicFashionPerception, PerceptionService
 from app.core.errors import ApiError
 from app.models.assets import StoredAsset
 from app.schemas.analysis import AnalysisJobResponse, AnalysisStatus
@@ -25,9 +25,11 @@ class AnalysisService:
         self,
         storage: AssetStorage,
         analyzer: GarmentAnalyzer | None = None,
+        perception: PerceptionService | None = None,
     ) -> None:
         self._storage = storage
-        self._analyzer = analyzer or DeterministicMetadataAnalyzer()
+        self._analyzer = analyzer
+        self._perception = perception or DeterministicFashionPerception()
         self._jobs: dict[UUID, AnalysisJobResponse] = {}
 
     async def analyze(self, asset_id: UUID, user_id: UUID) -> AnalysisJobResponse:
@@ -37,11 +39,28 @@ class AnalysisService:
         if asset.user_id != user_id:
             raise AssetNotOwnedError("asset is not owned by user")
         try:
-            await self._storage.read(asset)
-            category = Path(asset.original_filename).stem.replace("_", " ")
-            result = self._analyzer.analyze(
-                GarmentAnalysisInput(category=category or "unknown")
-            )
+            image_bytes = await self._storage.read(asset)
+            if self._analyzer is not None:
+                category = asset.original_filename.rsplit(".", 1)[0].replace("_", " ")
+                legacy = self._analyzer.analyze(
+                    GarmentAnalysisInput(category=category or "unknown")
+                )
+                result = legacy
+            else:
+                representation = self._perception.analyze(
+                    image_bytes, asset.original_filename
+                )
+                result = GarmentAnalysisResult(
+                    category=representation.category.value,
+                    colors=[color.value for color in representation.colors],
+                    unknown_attributes=[
+                        name
+                        for name, prediction in representation.attributes.items()
+                        if prediction.value == "unknown"
+                    ],
+                    provider=representation.category.source,
+                    representation=representation,
+                )
             job = AnalysisJobResponse(
                 job_id=uuid4(),
                 asset_id=asset.asset_id,

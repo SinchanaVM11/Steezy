@@ -1,10 +1,10 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Header, Query, status
 
 from app.core.config import get_settings
 from app.repositories.wardrobe import SQLiteWardrobeRepository
-from app.schemas.wardrobe import WardrobeItemCreate, WardrobeItemResponse
+from app.schemas.wardrobe import WardrobeItemCreate, WardrobeItemResponse, WardrobeVerification
 from app.schemas.errors import ErrorResponse
 from app.services.wardrobe import WardrobeService
 
@@ -50,3 +50,20 @@ def list_wardrobe_items(
         WardrobeItemResponse.model_validate(item)
         for item in service.list_items(user_id)
     ]
+
+
+@router.patch(
+    "/{item_id}/verification",
+    response_model=WardrobeItemResponse,
+    summary="Verify AI garment attributes",
+    responses={404: {"model": ErrorResponse, "description": "Item missing or not owned"}},
+)
+def verify_wardrobe_item(
+    item_id: UUID,
+    data: WardrobeVerification,
+    user_id: UUID = Header(..., alias="X-User-ID"),
+    service: WardrobeService = Depends(get_wardrobe_service),
+) -> WardrobeItemResponse:
+    return WardrobeItemResponse.model_validate(
+        service.verify_item(item_id, user_id, data.attributes)
+    )

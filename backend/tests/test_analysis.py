@@ -1,4 +1,6 @@
 from uuid import uuid4
+from io import BytesIO
+from PIL import Image
 
 import pytest
 
@@ -11,12 +13,18 @@ async def reader(content: bytes, limit: int) -> bytes:
     return content[:limit]
 
 
+def png_bytes() -> bytes:
+    output = BytesIO()
+    Image.new("RGB", (2, 2), (20, 40, 180)).save(output, format="PNG")
+    return output.getvalue()
+
+
 @pytest.mark.anyio
 async def test_analysis_is_deterministic_and_user_scoped() -> None:
     storage = InMemoryAssetStorage()
     user_id = uuid4()
     asset = await storage.save(
-        user_id, "navy_shirt.png", "image/png", lambda limit: reader(b"pixels", limit)
+        user_id, "shirt.png", "image/png", lambda limit: reader(png_bytes(), limit)
     )
     service = AnalysisService(storage)
 
@@ -25,8 +33,9 @@ async def test_analysis_is_deterministic_and_user_scoped() -> None:
 
     assert first.status == AnalysisStatus.COMPLETED
     assert first.result == second.result
-    assert first.result.category == "navy shirt"
-    assert first.result.provider == "deterministic-metadata-baseline"
+    assert first.result.category == "shirt"
+    assert first.result.representation.visual_embedding.metadata.dimension == 8
+    assert first.result.provider == "deterministic-fashion-perception-baseline"
     with pytest.raises(AssetNotOwnedError):
         await service.analyze(asset.asset_id, uuid4())
 
@@ -46,7 +55,7 @@ async def test_analysis_returns_failed_status_when_analyzer_fails() -> None:
     storage = InMemoryAssetStorage()
     user_id = uuid4()
     asset = await storage.save(
-        user_id, "shirt.png", "image/png", lambda limit: reader(b"pixels", limit)
+        user_id, "shirt.png", "image/png", lambda limit: reader(png_bytes(), limit)
     )
 
     result = await AnalysisService(storage, BrokenAnalyzer()).analyze(asset.asset_id, user_id)
