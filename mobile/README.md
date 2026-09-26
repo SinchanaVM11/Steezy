@@ -39,7 +39,8 @@ npm start
 - `src/wardrobe/useWardrobe.ts` owns loading, empty, success, and error state
   transitions. It requires an explicit user ID and does not imply auth.
 - `src/api/feedback.ts` and `src/feedback/useFeedback.ts` submit append-only
-  item feedback with explicit action types and per-item submission state.
+  item feedback for all six allowed actions with explicit action types and
+  per-item submission state. Duplicate in-flight submissions are ignored.
   state.
 
 Planned client responsibilities:

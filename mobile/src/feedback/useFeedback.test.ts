@@ -1,4 +1,4 @@
-import { feedbackStateReducer } from "./useFeedback";
+import { canSubmitFeedback, feedbackStateReducer } from "./useFeedback";
 
 const response = {
   id: "feedback-1",
@@ -29,5 +29,13 @@ describe("feedback submission state", () => {
       response,
       message: "offline",
     });
+  });
+
+  it("blocks duplicate submissions while an item is in flight", () => {
+    const inFlight = new Set(["item-1"]);
+
+    expect(canSubmitFeedback("user-1", "item-1", inFlight)).toBe(false);
+    expect(canSubmitFeedback("user-1", "item-2", inFlight)).toBe(true);
+    expect(canSubmitFeedback("", "item-2", inFlight)).toBe(false);
   });
 });

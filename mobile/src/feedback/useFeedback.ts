@@ -8,6 +8,14 @@ export type FeedbackSubmissionState =
   | { status: "success"; response: FeedbackResponse }
   | { status: "error"; response: FeedbackResponse | null; message: string };
 
+export function canSubmitFeedback(
+  userId: string,
+  wardrobeItemId: string,
+  inFlightItemIds: ReadonlySet<string>,
+): boolean {
+  return Boolean(userId.trim()) && Boolean(wardrobeItemId) && !inFlightItemIds.has(wardrobeItemId);
+}
+
 export function feedbackStateReducer(
   state: FeedbackSubmissionState,
   action:
@@ -31,7 +39,7 @@ export function useFeedback(userId: string, baseUrl: string) {
 
   const submit = useCallback(
     async (wardrobeItemId: string, action: FeedbackAction) => {
-      if (!userId.trim() || inFlight.current.has(wardrobeItemId)) {
+      if (!canSubmitFeedback(userId, wardrobeItemId, inFlight.current)) {
         return;
       }
 

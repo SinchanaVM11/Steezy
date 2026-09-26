@@ -16,6 +16,14 @@ type RootStackParamList = {
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const FEEDBACK_LABELS: Record<(typeof FEEDBACK_ACTIONS)[number], string> = {
+  like: "Like",
+  dislike: "Dislike",
+  save: "Save",
+  skip: "Skip",
+  wear: "Wear",
+  not_relevant: "Not relevant",
+};
 
 function HomeScreen() {
   return (
@@ -96,7 +104,7 @@ function WardrobeItemView({
                 {item.category} · {item.colors.join(", ") || "color not specified"}
               </Text>
               <View style={styles.actions}>
-                {FEEDBACK_ACTIONS.slice(0, 2).map((action) => {
+                {FEEDBACK_ACTIONS.map((action) => {
                   return (
                     <Pressable
                       key={action}
@@ -104,7 +112,7 @@ function WardrobeItemView({
                       onPress={() => void onSubmit(item.id, action)}
                     >
                       <Text style={styles.action}>
-                        {feedback.status === "submitting" ? "Saving…" : action}
+                        {feedback.status === "submitting" ? "Saving…" : FEEDBACK_LABELS[action]}
                       </Text>
                     </Pressable>
                   );

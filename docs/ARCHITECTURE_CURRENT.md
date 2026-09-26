@@ -121,7 +121,8 @@ exist.
 
 ### Phase 2.8 — mobile feedback interaction (current)
 
-- Submit explicit `like`/`dislike` actions from each loaded wardrobe item.
+- Submit the six allowed actions (`like`, `dislike`, `save`, `skip`, `wear`,
+  `not_relevant`) from each loaded wardrobe item.
 - Track submission state per item and prevent duplicate in-flight requests.
 - Treat malformed and non-success responses as visible errors; do not claim
   ranking or model learning.
